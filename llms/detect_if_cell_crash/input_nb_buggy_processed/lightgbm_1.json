@@ -1,0 +1,128 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "class conf:\n index = 'Id'\n target = 'quality'\n random = 2023\n\n load_original = True\n only_positive = False\n\n include_optuna = False\n\n include_lgbm = False\n include_catboost = False\n include_lgbm_regression = True\n n_trials = 10\n\nnp.random.seed(conf.random)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "import matplotlib.pyplot as plt\nimport seaborn as sns\nfrom pandas.plotting import scatter_matrix"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "train_full = pd.read_csv(\"data/train.csv\", index_col=conf.index)\ntest_full = pd.read_csv(\"data/test.csv\", index_col=conf.index)\ntrain = train_full.copy()\ntest = test_full.copy()\nif conf.load_original:\n print(\"Load external data...\")\n original = pd.read_csv('data/WineQT.csv', index_col=conf.index)\n if conf.only_positive:\n train = pd.concat([original[original[conf.target] == 1], train_full], ignore_index=True)\n else:\n train = pd.concat([original, train_full])\n\ntrain.info()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "train = train.reset_index()\ntrain = train.drop(columns=['Id'])"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "train['quality'].value_counts()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "from sklearn.feature_selection import mutual_info_classif"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "train2 = train.copy()\ntest2 = test.copy()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "def fe(df):\n df['alcohol_density'] = df['alcohol'] * df['density']\n df['alcohol_to_density'] = df['alcohol'] / df['density']\n df['sulphate/density'] = df['sulphates'] / df['density']"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 9,
+      "code": "fe(train2)\nfe(test2)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 10,
+      "code": "fe_mi = train2.drop(columns=[conf.target]).columns.to_list()\nmi = mutual_info_classif(train2[fe_mi], train2[[conf.target]]['quality'].values,\n discrete_features='auto', n_neighbors=5, copy=True, random_state=None)\ndf_mi = pd.DataFrame([mi], columns=fe_mi)\n\nax = df_mi.transpose().plot.bar(figsize=(10, 6), legend=False)\nax.set_xlabel('Features')\nax.set_ylabel('Value')\nax.set_title('Estimated mutual information: Higher values mean higher dependency of target')\nplt.tight_layout()\nplt.show()"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 11,
+      "code": "features1 = train2[train2.quality==3].columns.to_list()[0:11]\nfeatures2 = train2[train2.quality==3].columns.to_list()[12:15]\nfeatures = features1 + features2"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 12,
+      "code": "train2 = train2.drop(columns=['residual sugar', 'chlorides', 'free sulfur dioxide', 'pH'])\ntest2 = test2.drop(columns=['residual sugar', 'chlorides', 'free sulfur dioxide', 'pH'])"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 13,
+      "code": "features = test2.columns.to_list()"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 14,
+      "code": "from sklearn.preprocessing import StandardScaler\nscaler = StandardScaler()\ntrain2_scaled = scaler.fit_transform(train2[features])\ndf_train2_scaled = pd.DataFrame (train2_scaled, columns=features)\ntrain2 = pd.concat([df_train2_scaled, train2.quality], axis=1)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 15,
+      "code": "from sklearn.manifold import TSNE"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 16,
+      "code": "n_per = np.arange(10, 30, 2)"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 18,
+      "code": "tsne_model = TSNE(perplexity=25, n_components=2, init='pca', n_iter=250, random_state=23)\ndf_tsne = tsne_model.fit_transform(train2[features])\n\ndf_tsne_te = tsne_model.fit_transform(test2[features])\ndf_TSNE_te = pd.DataFrame(df_tsne_te, columns=['tsne1', 'tsne2'])\ndf_TSNE_te['Id'] = test.index\ndf_TSNE_te = df_TSNE_te.set_index('Id')"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 19,
+      "code": "df_tmp = pd.DataFrame(df_tsne, columns=['tsne1', 'tsne2'])\ndf_TSNE = pd.concat([df_tmp,train[conf.target]], axis=1)\n\ndf_TSNE = df_TSNE[(df_TSNE.quality == 4) | (df_TSNE.quality == 7)]\n\ngroups = df_TSNE.groupby(conf.target)\n\nfig, ax = plt.subplots(figsize=(12, 12))\nax.margins(0.05)\nfor name, group in groups:\n ax.plot(group.tsne1, group.tsne2, marker='o', linestyle='', ms=12, label=name)\nax.legend()\n\nplt.show()"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 20,
+      "code": "df_tmp = train2.drop(columns=['quality'])\ntrain3 = pd.concat([df_tmp, df_TSNE], axis=1)\ntest3 = pd.concat([test2, df_TSNE_te], axis=1)"
+    },
+    {
+      "execution_count": 27,
+      "code_cell_id": 21,
+      "code": "from sklearn.metrics import cohen_kappa_score\nfrom sklearn.model_selection import StratifiedKFold\n\nfrom lightgbm.sklearn import LGBMClassifier\nfrom catboost import CatBoostClassifier\n\nfrom lightgbm import LGBMRegressor\nimport scipy as sp\nfrom functools import partial\n\nimport optuna\nimport warnings\nwarnings.filterwarnings('ignore')"
+    },
+    {
+      "execution_count": 28,
+      "code_cell_id": 22,
+      "code": "y = train3[conf.target]\nX = train3.drop([conf.target], axis=1)"
+    },
+    {
+      "execution_count": 29,
+      "code_cell_id": 23,
+      "code": "qwk = partial(cohen_kappa_score, weights='quadratic')\n\nclass LGBMRegressorWithRounder(LGBMRegressor):\n '''\n A light wrapper over LGBMRegressor to deal rounding predictions\n '''\n def _kappa_loss(self, coef, X, y):\n X_p = np.copy(X)\n for i, pred in enumerate(X_p):\n if pred < coef[0]:\n X_p[i] = 3\n elif pred >= coef[0] and pred < coef[1]:\n X_p[i] = 4\n elif pred >= coef[1] and pred < coef[2]:\n X_p[i] = 5\n elif pred >= coef[2] and pred < coef[3]:\n X_p[i] = 6\n elif pred >= coef[3] and pred < coef[4]:\n X_p[i] = 7\n else:\n X_p[i] = 8\n\n ll = qwk(y, X_p)\n return -ll\n\n def fit(self, X, y, **params):\n super().fit(X, y, **params)\n X_pred = super().predict(X)\n loss_partial = partial(self._kappa_loss, X=X_pred, y=y)\n\n initial_coef = list(\n np.array([3.5, 4.5, 5.5, 6.5, 7.5])\n )\n self.round_coef_ = sp.optimize.minimize(loss_partial, initial_coef, method='nelder-mead')\n return self\n\n def set_params(self, **params):\n self.round_coef_ = None\n\n def predict_discrete(self, X):\n coef = self.coefficients()\n X_p = np.copy(X)\n for i, pred in enumerate(X_p):\n if pred < coef[0]:\n X_p[i] = 3\n elif pred >= coef[0] and pred < coef[1]:\n X_p[i] = 4\n elif pred >= coef[1] and pred < coef[2]:\n X_p[i] = 5\n elif pred >= coef[2] and pred < coef[3]:\n X_p[i] = 6\n elif pred >= coef[3] and pred < coef[4]:\n X_p[i] = 7\n else:\n X_p[i] = 8\n return X_p.astype('int')\n\n def coefficients(self):\n return self.round_coef_['x']\n\n def predict(self, X):\n X_pred = super().predict(X)\n return self.predict_discrete(X_pred)"
+    },
+    {
+      "execution_count": 30,
+      "code_cell_id": 24,
+      "code": "scores =[]\n\ndef find_out_params_model(trial):\n random_state = trial.suggest_int('random_state', 1000, 2000)\n n_splits = trial.suggest_int('n_splits', 8, 20)\n cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=conf.random)\n my_model = LGBMClassifier(\n random_state = random_state\n )\n for fold, (train_idx, valid_idx) in enumerate(cv.split(X, y)):\n\n X_train, X_valid = X.iloc[train_idx], X.iloc[valid_idx]\n y_train , y_valid = y.iloc[train_idx] , y.iloc[valid_idx]\n my_model.fit(\n X_train, y_train,\n eval_set= [(X_valid,y_valid)],\n early_stopping_rounds = 50,\n verbose=0\n )\n\n preds_valid = my_model.predict(X_valid)\n score = cohen_kappa_score(y_valid, preds_valid, weights = \"quadratic\")\n scores.append(score)\n return np.mean(scores)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 25,
+    "code": "study = optuna.create_study(direction=\"maximize\")\nstudy.optimize(find_out_params_model, n_trials=2)"
+  }
+}

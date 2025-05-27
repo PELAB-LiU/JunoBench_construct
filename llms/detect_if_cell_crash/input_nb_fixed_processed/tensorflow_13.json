@@ -1,0 +1,23 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\n\ndef load_glove_embeddings(embeddings_file):\n embeddings_index = dict()\n with open(embeddings_file, 'r', encoding='utf-8') as f:\n for line in f:\n values = line.split()\n word = values[0]\n coefs = np.asarray(values[1:], dtype='float32')\n embeddings_index[word] = coefs\n return embeddings_index\n\nglove_embeddings_file = 'data/glove.6B.50d.txt'\nglove_embeddings = load_glove_embeddings(glove_embeddings_file)"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "from transformers import BertTokenizer\n\nbert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')\n\ndef tokenize_text(text):\n tokens = bert_tokenizer.tokenize(text)\n tokens = ['[CLS]'] + tokens + ['[SEP]']\n input_ids = bert_tokenizer.convert_tokens_to_ids(tokens)\n return input_ids\n\ntext = \"This is an example sentence.\"\ninput_ids = tokenize_text(text)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 9,
+      "code": "docs = np.array(['Well done!',\n 'Good work',\n 'Great effort',\n 'nice work',\n 'Excellent!',\n 'Weak',\n 'Poor effort!',\n 'not good',\n 'poor work',\n 'Could have done better.'])\n\nlabels = np.array([1,1,1,1,1,0,0,0,0,0])"
+    }
+  ],
+  "target": {
+    "code_cell_id": 11,
+    "code": "import numpy as np\nfrom tensorflow.keras.preprocessing.sequence import pad_sequences\nfrom tensorflow.keras.preprocessing.text import Tokenizer\n\nmax_length = 768\n\ndocs = pad_sequences([tokenize_text(i) for i in docs], maxlen=max_length, padding='post', truncating='post')\ndocs.shape"
+  }
+}

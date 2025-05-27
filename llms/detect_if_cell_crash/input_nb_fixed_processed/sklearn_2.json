@@ -1,0 +1,218 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 2,
+      "code": "from sklearn.metrics import r2_score,mean_squared_error\nfrom sklearn.ensemble import RandomForestRegressor\nfrom sklearn.tree import DecisionTreeRegressor\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom math import sqrt\nimport numpy as np\nimport pandas as pd\nimport warnings\nwarnings.filterwarnings('ignore')"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 3,
+      "code": "pd.set_option('display.max_columns', None)\npd.set_option('display.width', 500)\npd.set_option('display.max_rows', 80)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 4,
+      "code": "def cat_summary(dataframe, col_name, plot=False):\n print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),\n \"Ratio\": 100 * dataframe[col_name].value_counts() / len(dataframe)}))\n print(\"##########################################\")\n if plot:\n sns.countplot(x=dataframe[col_name], data=dataframe)\n plt.show(block=True)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 5,
+      "code": "def num_summary(dataframe, numerical_col, plot=False):\n quantiles = [0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]\n print(dataframe[numerical_col].describe(quantiles).T)\n\n if plot:\n dataframe[numerical_col].hist(bins=20)\n plt.xlabel(numerical_col)\n plt.title(numerical_col)\n plt.show(block=True)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 6,
+      "code": "def check_df(dataframe, head=5):\n print(\"##################### Shape #####################\")\n print(dataframe.shape)\n print(\"##################### Types #####################\")\n print(dataframe.dtypes)\n print(\"##################### Head #####################\")\n print(dataframe.head(head))\n print(\"##################### Tail #####################\")\n print(dataframe.tail(head))\n print(\"##################### NA #####################\")\n print(dataframe.isnull().sum())\n print(\"##################### Quantiles #####################\")"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 7,
+      "code": "def correlation_matrix(df, cols):\n fig = plt.gcf()\n fig.set_size_inches(10, 8)\n plt.xticks(fontsize=10)\n plt.yticks(fontsize=10)\n fig = sns.heatmap(df[cols].corr(), annot=True, linewidths=0.5, annot_kws={'size': 12}, linecolor='w', cmap='RdBu')\n plt.show(block=True)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 8,
+      "code": "train_raw = pd.read_csv('data/train.csv')\ntest_raw = pd.read_csv('data/test.csv')\nmeal = pd.read_csv('data/meal_info.csv')\ncenterinfo = pd.read_csv('data/fulfilment_center_info.csv')"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 9,
+      "code": "train = pd.merge(train_raw, meal, on=\"meal_id\", how=\"left\")\ndf = pd.merge(train, centerinfo, on=\"center_id\", how=\"left\")\nprint(\"Shape of train data : \", df.shape)\ndf.head()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 10,
+      "code": "test_raw = pd.merge(test_raw, meal, on=\"meal_id\", how=\"left\")\ndft = pd.merge(test_raw, centerinfo, on=\"center_id\", how=\"left\")\nprint(\"Shape of train data : \", dft.shape)\ndft.head()"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 12,
+      "code": "col_names=['center_id','meal_id','category','cuisine','city_code','region_code','center_type','emailer_for_promotion','homepage_featured', 'week']\ndft[col_names] = dft[col_names].astype('category')"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 13,
+      "code": "check_df(df)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 14,
+      "code": "col_names=['center_id','meal_id','category','cuisine','city_code','region_code','center_type','emailer_for_promotion','homepage_featured', 'week']\ndf[col_names] = df[col_names].astype('category')\n\nprint(\"Train Datatype\\n\",df.dtypes)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 15,
+      "code": "cat_col=['center_id','meal_id','category','cuisine','city_code','region_code','center_type','emailer_for_promotion','homepage_featured']\nnum_col=['week','checkout_price','base_price','num_orders','op_area']"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 16,
+      "code": "empty_cells = []\n\nfor column in df.columns:\n empty_cells.append(df[df[column] == \"\"].index.tolist())\n\nprint(empty_cells)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 19,
+      "code": "df = df[df['num_orders'] <= 20000];\ndf=df.drop(\"id\", axis=1)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 21,
+      "code": "if 'id' in df.columns:\n df = df.drop('id', axis=1)\ndf.head()"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 25,
+      "code": "df['new_discount_rate'] = (df['base_price'] - df['checkout_price']) / df['base_price']\ndf.head()"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 26,
+      "code": "df=df.drop(\"checkout_price\",axis=1)"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 29,
+      "code": "weekly_cuisine_category = df.groupby(['week', 'cuisine'])['category'].nunique().reset_index()\nweekly_cuisine_category.rename(columns={'category': 'weekly_cuisine_cat'}, inplace=True)\n\ndf = df.merge(weekly_cuisine_category, on=['week', 'cuisine'], how='left')\ndf.head()"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 30,
+      "code": "cat_cuisine_price = df.groupby(['category', 'cuisine'])['base_price'].nunique().reset_index()\ncat_cuisine_price.rename(columns={'base_price': 'cat_cuisine_price'}, inplace=True)\n\ndf = df.merge(cat_cuisine_price, on=['category', 'cuisine'], how='left')\ndf.head()"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 34,
+      "code": "num_col=['week','base_price','num_orders','op_area','new_discount_rate','weekly_cuisine_cat','cat_cuisine_price']"
+    },
+    {
+      "execution_count": 22,
+      "code_cell_id": 38,
+      "code": "df['week'] = df['week'].astype(int)"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 39,
+      "code": "df_train=df[df.week<=119]"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 40,
+      "code": "df_test=df[df.week>119]"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 43,
+      "code": "df_train=df_train.drop(\"week\",axis=1)\ndf_test=df_test.drop(\"week\",axis=1)"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 45,
+      "code": "b=list(df_train.columns)"
+    },
+    {
+      "execution_count": 27,
+      "code_cell_id": 47,
+      "code": "df_encoded = pd.get_dummies(df_train[b], drop_first=True)\n\ndf_encoded.head()"
+    },
+    {
+      "execution_count": 28,
+      "code_cell_id": 48,
+      "code": "df_test_encoded=pd.get_dummies(df_test[b], drop_first=True)\ndf_test_encoded.head()"
+    },
+    {
+      "execution_count": 29,
+      "code_cell_id": 49,
+      "code": "X = df_encoded.drop(\"num_orders\", axis=1)\ny = df_encoded[\"num_orders\"]"
+    },
+    {
+      "execution_count": 30,
+      "code_cell_id": 50,
+      "code": "w=df_test_encoded.drop(\"num_orders\", axis=1)\nz=df_test_encoded[\"num_orders\"]"
+    },
+    {
+      "execution_count": 31,
+      "code_cell_id": 51,
+      "code": "from sklearn.preprocessing import StandardScaler"
+    },
+    {
+      "execution_count": 32,
+      "code_cell_id": 53,
+      "code": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nscaler = StandardScaler()\nX_train_scaled = scaler.fit_transform(X_train)\nX_test_scaled = scaler.transform(X_test)"
+    },
+    {
+      "execution_count": 33,
+      "code_cell_id": 64,
+      "code": "from sklearn.tree import DecisionTreeRegressor\nfrom sklearn.model_selection import GridSearchCV\nfrom sklearn.metrics import r2_score, mean_squared_error\nfrom math import sqrt\n\nparam_grid = {\n 'max_depth': [10, 15, 20],\n 'min_samples_split': [2, 5],\n 'min_samples_leaf': [1, 2]\n}\n\nDTRmodel = DecisionTreeRegressor(random_state=0)\n\ngrid_search = GridSearchCV(estimator=DTRmodel, param_grid=param_grid,\n cv=5, scoring='neg_mean_squared_error', n_jobs=-1)\n\ngrid_search.fit(X, y)\n\nbest_params = grid_search.best_params_\nbest_estimator = grid_search.best_estimator_\n\ny_pred = best_estimator.predict(w)\n\nr2 = r2_score(z, y_pred)\nmse = mean_squared_error(z, y_pred)\nrmse = sqrt(mse)\n\nprint(\"En iyi parametreler:\", best_params)\nprint(\"R2 score:\", r2)\nprint(\"MSE score:\", mse)\nprint(\"RMSE:\", rmse)"
+    },
+    {
+      "execution_count": 34,
+      "code_cell_id": 65,
+      "code": "dft['new_discount_rate'] = (dft['base_price'] - dft['checkout_price']) / dft['base_price']"
+    },
+    {
+      "execution_count": 35,
+      "code_cell_id": 66,
+      "code": "dft=dft.drop(\"checkout_price\",axis=1)"
+    },
+    {
+      "execution_count": 36,
+      "code_cell_id": 67,
+      "code": "weekly_cuisine_category = dft.groupby(['week', 'cuisine'])['category'].nunique().reset_index()\nweekly_cuisine_category.rename(columns={'category': 'weekly_cuisine_cat'}, inplace=True)\n\ndft = dft.merge(weekly_cuisine_category, on=['week', 'cuisine'], how='left')\ndft.head()"
+    },
+    {
+      "execution_count": 37,
+      "code_cell_id": 68,
+      "code": "cat_cuisine_price = dft.groupby(['category', 'cuisine'])['base_price'].nunique().reset_index()\ncat_cuisine_price.rename(columns={'base_price': 'cat_cuisine_price'}, inplace=True)\n\ndft = dft.merge(cat_cuisine_price, on=['category', 'cuisine'], how='left')\ndft.head()"
+    },
+    {
+      "execution_count": 38,
+      "code_cell_id": 69,
+      "code": "dft=dft.drop(\"id\",axis=1)"
+    },
+    {
+      "execution_count": 39,
+      "code_cell_id": 70,
+      "code": "dftt=dft\ndftt.head()"
+    },
+    {
+      "execution_count": 40,
+      "code_cell_id": 71,
+      "code": "dft=dft.drop('week',axis=1)"
+    },
+    {
+      "execution_count": 41,
+      "code_cell_id": 72,
+      "code": "c = list(dft.columns)\nc"
+    },
+    {
+      "execution_count": 42,
+      "code_cell_id": 73,
+      "code": "dft_encoded = pd.get_dummies(dft[c], drop_first=True)\ndft_encoded.head()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 74,
+    "code": "final_pred = best_estimator.predict(dft_encoded)"
+  }
+}

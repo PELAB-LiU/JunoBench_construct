@@ -1,0 +1,73 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\n\nimport os\nfor dirname, _, filenames in os.walk('data'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "import re"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 2,
+      "code": "df = pd.read_csv(\"data/IMDB Dataset.csv\")\ndf.head()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df['review'] = df['review'].str.lower()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "def remove_html_tags(text):\n clean = re.compile('<.*?>')\n return re.sub(clean, '', text)\n\ndf['review'] = df['review'].apply(remove_html_tags)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "def remove_urls(text):\n clean = re.compile(r'http\\S+|www.\\S+')\n return re.sub(clean, '', text)\n\ndf['review'] = df['review'].apply(remove_urls)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "import string\nexclude = string.punctuation\n\ndef remove_punc(text):\n return text.translate(str.maketrans('','',exclude))\n\ndf['review'] = df['review'].apply(remove_punc)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 13,
+      "code": "from nltk.corpus import stopwords\nstp = stopwords.words('english')\n\n'''nltk.download('stopwords')'''"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 14,
+      "code": "def remove_stopwords(text):\n new_text = []\n\n for word in text.split():\n if word in stp:\n new_text.append('')\n else:\n new_text.append(word)\n\n x = new_text[:]\n new_text.clear()\n return \" \".join(x)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 15,
+      "code": "df['review'] = df['review'].apply(remove_stopwords)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 16,
+      "code": "def remove_emoji(text):\n emoji_pattern = re.compile(\"[\"\n u\"\\U0001F600-\\U0001F64F\"\n u\"\\U0001F300-\\U0001F5FF\"\n u\"\\U0001F680-\\U0001F6FF\"\n u\"\\U0001F1E0-\\U0001F1FF\"\n \"]+\", flags=re.UNICODE)\n return emoji_pattern.sub(r'', text)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 17,
+      "code": "emoji_text = \"hello, world 😀,😃,😄 😈 😀\"\nremove_emoji(emoji_text)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 23,
+      "code": "from nltk.tokenize import word_tokenize\ndef wrd_token(text):\n return word_tokenize(text)\ndf['review'] = df['review'].apply(wrd_token)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 34,
+    "code": "tf_idf.toarray()"
+  }
+}

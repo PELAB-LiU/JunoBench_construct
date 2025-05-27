@@ -1,0 +1,68 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import os\nimport cv2\nimport glob\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom tensorflow.keras.utils import to_categorical\nfrom sklearn.model_selection import train_test_split\nfrom PIL import Image\nimport pickle"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "train_dir=\"data/signature-verification-dataset/sign_data/train\"\ntest_dir=\"data/signature-verification-dataset/sign_data/test\""
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 3,
+      "code": "def load_images(file_list):\n images = []\n for files in file_list:\n for file in files:\n img = cv2.imread(file)\n images.append(img)\n return images"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 4,
+      "code": "Class_names1_train = set()\ntrainpath = train_dir\nfor dirname in os.listdir(trainpath):\n if 'g' not in dirname:\n Class_names1_train.add(dirname)\nprint(\"Class_names1_train1:\",len(Class_names1_train))\n\nClass_names2_train = set()\ntrainpath = train_dir\nfor dirname in os.listdir(trainpath):\n if 'g' in dirname:\n Class_names2_train.add(dirname)\nprint(\"Class_names2_train\",len(Class_names2_train))\n\nClass_names1_test = set()\ntrainpath = test_dir\nfor dirname in os.listdir(trainpath):\n if 'g' not in dirname:\n Class_names1_test.add(dirname)\nprint(\"Class_names1_test\",len(Class_names1_test))\n\nClass_names2_test = set()\ntrainpath = test_dir\nfor dirname in os.listdir(trainpath):\n if 'g' not in dirname:\n Class_names2_test.add(dirname)\nprint(\"Class_names2_test\",len(Class_names2_test))"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 5,
+      "code": "freq= {}\ndirectory='data/'\ncategories=['signature-verification-dataset-iraninan/train/']\nfor category in categories:\n path = os.path.join(directory,category)\n for dirname in os.listdir(path):\n if 'f' not in dirname:\n count = 0\n for img in os.listdir(path+dirname):\n count+=1\n freq[dirname] = count\n\nfreq"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 6,
+      "code": "freq= {}\ndirectory='data'\ncategories=['signature-verification-dataset-iraninan/test/']\nfor category in categories:\n path = os.path.join(directory,category)\n for dirname in os.listdir(path):\n if 'f' not in dirname:\n count = 0\n for img in os.listdir(path+dirname):\n count+=1\n freq[dirname] = count\n\nfreq"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 7,
+      "code": "SIZE = 224"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 10,
+      "code": "images = np.concatenate((real_images, forged_images))\nlabels = np.concatenate((real_labels, forged_labels))\n\ntrain_data, test_data, train_labels, test_labels = train_test_split(images, labels, test_size=0.2, random_state=42)\nprint(train_data.shape)\nprint(test_data.shape)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 11,
+      "code": "print(train_labels.shape)"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 13,
+      "code": "from tensorflow import keras\nfrom tensorflow.keras import layers\n\ntrain_data = train_data.reshape((train_data.shape[0], 224, 224, 1))\ntest_data = test_data.reshape((test_data.shape[0], 224, 224, 1))\ntrain_data = train_data.astype('float32') / 255\ntest_data = test_data.astype('float32') / 255\n\nmodel = keras.Sequential([\n layers.Conv2D(16, (9, 9), activation='relu', input_shape=(224, 224, 1)),\n layers.MaxPooling2D((2, 2)),\n layers.Conv2D(32, (5, 5), activation='relu'),\n layers.MaxPooling2D((2, 2)),\n layers.Conv2D(32, (3, 3), activation='relu'),\n layers.MaxPooling2D((2, 2)),\n layers.Conv2D(16, (3, 3), activation='relu'),\n layers.MaxPooling2D((2, 2)),\n layers.Conv2D(8, (3, 3), activation='relu'),\n layers.MaxPooling2D((2, 2)),\n layers.Flatten(),\n layers.Dense(256, activation='relu'),\n layers.Dropout(.2),\n layers.Dense(128, activation='relu'),\n layers.Dropout(.4),\n layers.Dense(1, activation='sigmoid')\n])\n\nmodel.compile(optimizer='Adadelta',\n loss='binary_crossentropy',\n metrics=['accuracy'])\n\nmodel.summary()\n\nearly_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)\n\nhistory = model.fit(train_data, train_labels, batch_size=64, epochs=3, validation_split=.2, callbacks=[early_stop])\n\nimport matplotlib.pyplot as plt\n\nacc = history.history['accuracy']\nval_acc = history.history['val_accuracy']\nloss = history.history['loss']\nval_loss = history.history['val_loss']\n\nepochs = range(1, len(acc) + 1)\n\nplt.plot(epochs, acc, 'bo', label='Training acc')\nplt.plot(epochs, val_acc, 'b', label='Validation acc')\nplt.title('Training and validation accuracy')\nplt.legend()\n\nplt.figure()\n\nplt.plot(epochs, loss, 'bo', label='Training loss')\nplt.plot(epochs, val_loss, 'b', label='Validation loss')\nplt.title('Training and validation loss')\nplt.legend()\n\nplt.show()"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 14,
+      "code": "final_loss, final_accuracy = model.evaluate(test_data, test_labels)\n\nprint(\"Final Loss: {:.2f}%\".format(final_loss * 100))\nprint(\"Final Accuracy: {:.2f}%\".format(final_accuracy * 100))"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 15,
+      "code": "model.save('CRNN-2.h5')"
+    }
+  ],
+  "target": {
+    "code_cell_id": 12,
+    "code": "import tensorflow as tf\nfrom tensorflow import keras\nfrom tensorflow.keras import layers\nfrom sklearn.model_selection import train_test_split\n\ntrain_data = train_data.astype('float32') / 255\ntest_data = test_data.astype('float32') / 255\n\nmodel = keras.Sequential([\n layers.LSTM(256, input_shape=(train_data.shape[1], train_data.shape[2])),\n layers.Dense(2, activation='softmax')\n])\n\nmodel.compile(optimizer='rmsprop',\n loss='sparse_categorical_crossentropy',\n metrics=['accuracy'])\n\nmodel.summary()\n\nearly_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)\n\nhistory = model.fit(train_data, train_labels, batch_size=32, epochs=10, validation_split=.2, callbacks=[early_stop])\n\nimport matplotlib.pyplot as plt\n\nacc = history.history['accuracy']\nval_acc = history.history['val_accuracy']\nloss = history.history['loss']\nval_loss = history.history['val_loss']\nepochs = range(1, len(acc) + 1)\n\nplt.plot(epochs, acc, 'bo', label='Training acc')\nplt.plot(epochs, val_acc, 'b', label='Validation acc')\nplt.title('Training and validation accuracy')\nplt.legend()\n\nplt.figure()\n\nplt.plot(epochs, loss, 'bo', label='Training loss')\nplt.plot(epochs, val_loss, 'b', label='Validation loss')\nplt.title('Training and validation loss')\nplt.legend()\n\nplt.show()"
+  }
+}

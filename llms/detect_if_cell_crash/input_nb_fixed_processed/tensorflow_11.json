@@ -1,0 +1,83 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nfrom pathlib import Path\nimport os.path\nimport matplotlib.pyplot as plt\nfrom IPython.display import Image, display\nimport matplotlib.cm as cm\n\nimport tensorflow as tf\n\nimport os\nimport shutil\nfrom tqdm import tqdm\nfrom random import shuffle\n\nimport cv2\nfrom glob import glob\n\nfrom tensorflow.keras import backend as K\nimport random\nimport albumentations as A\nfrom sklearn.model_selection import train_test_split, StratifiedKFold\n\nfrom tensorflow.keras.layers import *\nfrom tensorflow.keras.optimizers import *\nfrom tensorflow.keras.models import *\nfrom tensorflow.keras.preprocessing.image import *\nfrom tensorflow.keras.callbacks import *\nfrom tensorflow.keras.applications.efficientnet import *"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 1,
+      "code": "image_dir = Path('data_small/test')\n\nfilepaths = list(image_dir.glob(r'**/*.jpg'))\nlabels = list(map(lambda x: os.path.split(os.path.split(x)[0])[1], filepaths))\n\nfilepaths = pd.Series(filepaths, name='Filepath').astype(str)\nlabels = pd.Series(labels, name='Label')\n\nimage_df = pd.concat([filepaths, labels], axis=1)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 2,
+      "code": "image_df.head(5)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 3,
+      "code": "image_df = image_df.sample(frac=1).reset_index(drop = True)\n\nimage_df.head(5)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 4,
+      "code": "image_df.shape"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 5,
+      "code": "fig, axes = plt.subplots(nrows=3, ncols=5, figsize=(15, 7),\n subplot_kw={'xticks': [], 'yticks': []})\n\nfor i, ax in enumerate(axes.flat):\n ax.imshow(plt.imread(image_df.Filepath[i]))\n ax.set_title(image_df.Label[i])\nplt.tight_layout()\nplt.show()"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 6,
+      "code": "train_df, test_df = train_test_split(image_df, train_size=0.9, shuffle=True, random_state=1)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 7,
+      "code": "train_df.shape"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 8,
+      "code": "train_generator = tf.keras.preprocessing.image.ImageDataGenerator(\n preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input,\n validation_split=0.2\n)\n\ntest_generator = tf.keras.preprocessing.image.ImageDataGenerator(\n preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input\n)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 9,
+      "code": "train_df.head(5)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 10,
+      "code": "train_images = train_generator.flow_from_dataframe(\n dataframe=train_df,\n x_col='Filepath',\n y_col='Label',\n target_size=(224, 224),\n color_mode='rgb',\n class_mode='categorical',\n batch_size=32,\n shuffle=True,\n seed=42,\n subset='training'\n)\n\nval_images = train_generator.flow_from_dataframe(\n dataframe=train_df,\n x_col='Filepath',\n y_col='Label',\n target_size=(224, 224),\n color_mode='rgb',\n class_mode='categorical',\n batch_size=32,\n shuffle=True,\n seed=42,\n subset='validation'\n)\n\ntest_images = test_generator.flow_from_dataframe(\n dataframe=test_df,\n x_col='Filepath',\n y_col='Label',\n target_size=(224, 224),\n color_mode='rgb',\n class_mode='categorical',\n batch_size=32,\n shuffle=False\n)"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 11,
+      "code": "def create_model(input_shape=(224, 224, 3)):\n\n inputs = Input(input_shape)\n base_model = EfficientNetB1(input_shape=input_shape, include_top=False, classes=5)\n\n x = base_model(inputs)\n\n x = GlobalAveragePooling2D()(x)\n\n x = Dense(56, activation='relu')(x)\n x = Dropout(0.1)(x)\n\n outputs = Dense(2, activation='sigmoid')(x)\n\n model = Model(inputs, outputs)\n\n return model"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 12,
+      "code": "K.clear_session()\n\nmodel = create_model((224, 224, 3))\n\nmetrics = [\n 'accuracy',\n 'AUC'\n]"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 13,
+      "code": "model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=metrics)"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 14,
+      "code": "checkpoint_path = 'data/model_224.keras'\n\ncallbacks = [\n EarlyStopping(monitor='val_loss', mode='min', patience=15, verbose=1),\n ReduceLROnPlateau(monitor='val_loss', mode='min', factor=0.1, patience=5, min_lr=0.000001, verbose=1),\n ModelCheckpoint(monitor='val_loss', mode='min', filepath=checkpoint_path, verbose=1, save_best_only=True, save_weights_only=False)\n]"
+    }
+  ],
+  "target": {
+    "code_cell_id": 15,
+    "code": "history = model.fit(\n train_images,\n validation_data=val_images,\n epochs=3,\n callbacks=callbacks\n)"
+  }
+}

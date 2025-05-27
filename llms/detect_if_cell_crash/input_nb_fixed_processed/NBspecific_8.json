@@ -1,0 +1,23 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom sklearn.metrics import confusion_matrix,auc,roc_auc_score\nfrom sklearn.metrics import recall_score, precision_score, accuracy_score, f1_score\n\ndf = pd.read_csv(\"data/creditcard.csv.zip\")\n\nprint(df.shape)\n\nprint(\"First 5 lines:\")\nprint(df.head(5))\n\nprint(\"describe: \")\nprint(df.describe())\n\nprint(\"info: \")\nprint(df.info())\n\n\"\"\"Since all variables are of float and int type, so this data is easy to handle for modeling\"\"\""
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 4,
+      "code": "df = df.drop(['Time'],axis=1)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 5,
+      "code": "fig, (ax3,ax4) = plt.subplots(2,1, figsize = (6,3), sharex = True)\nax3.hist(df.Amount[df.Class==0],bins=50,color='g',alpha=0.5)\nax3.set_yscale('log')\nax3.set_title('Genuine')\nax3.set_ylabel('# transactions')\n\nax4.hist(df.Amount[df.Class==1],bins=50,color='r',alpha=0.5)\nax4.set_yscale('log')\nax4.set_title('Fraud')\n\nax4.set_xlabel('Amount ($)')\nax4.set_ylabel('# transactions')"
+    }
+  ],
+  "target": {
+    "code_cell_id": 6,
+    "code": "from sklearn.preprocessing import StandardScaler\ndf['scaled_Amount'] = StandardScaler().fit_transform(df['Amount'].values.reshape(-1,1))\ndf = df.drop(['Amount'],axis=1)"
+  }
+}

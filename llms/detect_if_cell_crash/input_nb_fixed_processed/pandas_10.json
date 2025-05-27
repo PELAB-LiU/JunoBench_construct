@@ -1,0 +1,128 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df=pd.read_csv('data/googleplaystore.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "df.dropna(inplace=True)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "df.dtypes"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 9,
+      "code": "df['Reviews']=df['Reviews'].astype('int')"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 10,
+      "code": "df.dtypes"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 12,
+      "code": "df['Installs']=df['Installs'].str.replace('+','')\ndf['Installs']=df['Installs'].str.replace(',','')"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 13,
+      "code": "df['Installs']=df['Installs'].astype('int')"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 14,
+      "code": "df.dtypes"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 15,
+      "code": ""
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 16,
+      "code": "df['Price']=df['Price'].str.replace('$','')"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 17,
+      "code": "df['Price']=df['Price'].astype('float')"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 18,
+      "code": "df.dtypes"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 19,
+      "code": ""
+    },
+    {
+      "execution_count": 22,
+      "code_cell_id": 20,
+      "code": "df['Size'].value_counts()"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 21,
+      "code": "def change_size(size):\n if 'M' in size:\n x=size[:-1]\n x=float(x)*1000\n return x\n if 'k' in size:\n x=size[:-1]\n x=float(x)\n return x\n else:\n return None"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 22,
+      "code": "df['Size']=df['Size'].apply(change_size)"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 24,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 25,
+      "code": "df['Size'].fillna(method='ffill',inplace=True)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 11,
+    "code": ""
+  }
+}

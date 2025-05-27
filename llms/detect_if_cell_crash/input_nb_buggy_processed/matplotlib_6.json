@@ -1,0 +1,23 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 4,
+      "code": "import warnings\n\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport matplotlib as mpl\nimport seaborn as sns\n\nimport plotly.express as px\n\nimport scipy\nfrom mpl_toolkits.mplot3d import Axes3D\nfrom yellowbrick.cluster import KElbowVisualizer\n\nfrom warnings import filterwarnings\nfilterwarnings('ignore')"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 5,
+      "code": "df=pd.read_csv('data/3711.csv');df"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 13,
+      "code": "sns.set_style('darkgrid')\nfig, ax = plt.subplots(6,1, figsize=(20, 45))\nfor i, col in enumerate(list(df.columns)):\n axes_hist = ax[i]\n sns.histplot(data=df, x=col, ax=axes_hist,color = '#a5c687', stat = \"density\",edgecolor='#ff1195')\n sns.kdeplot(x = col, data = df,ax=axes_hist, color = '#5678f1', linewidth = 5)\n ax[i].set_title(col,fontsize=35,color='#561195')"
+    }
+  ],
+  "target": {
+    "code_cell_id": 11,
+    "code": "sns.set_style('darkgrid')\nfig, ax = plt.subplots(6, 1, figsize=(5, 20))\n\nfor i, col in enumerate(list(df.columns.values)):\n axes_box = ax[i]\n sns.boxplot(data=df, x=col, ax=axes_box,color='#a5c687')\n ax[i].set_title(col,fontsize=15,color='magenta')"
+  }
+}

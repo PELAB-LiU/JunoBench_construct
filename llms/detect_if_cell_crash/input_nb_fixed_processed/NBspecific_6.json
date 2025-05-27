@@ -1,0 +1,88 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import sys\nimport numpy as np\nfrom sklearn.preprocessing import KBinsDiscretizer\n\nfrom keras.layers import Dense, Input, LSTM, Reshape, Conv2D, MaxPooling2D\nfrom tensorflow import keras\nfrom tensorflow.keras.models import Model\nfrom tensorflow.keras.optimizers import Adam\nimport tensorflow as tf\nfrom sklearn.metrics import classification_report, accuracy_score\nimport matplotlib.pyplot as plt\nimport pandas as pd\nimport math\nimport os\nimport shutil\nimport ntpath\nimport re\nimport csv\nimport json\nfrom datetime import datetime as dt\nimport requests\nimport pytz\nfrom datetime import timedelta"
+    },
+    {
+      "execution_count": 75,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/1-09-1-20.csv.zip',index_col='Unnamed: 0',parse_dates=True)\ndf.columns = np.arange(42)\ndf = df.sample(n=100000).reset_index(drop=True)\ndf"
+    },
+    {
+      "execution_count": 76,
+      "code_cell_id": 2,
+      "code": "df = df.drop_duplicates(subset=1)\n\ndata = df.loc[:,[2,3,22,23,4,5,24,25,6,7,26,27,8,9,28,29,10,11,30,31,12,13,32,33,14,15,34,35,16,17,36,37,18,19,38,39,20,21,40,41]]\n\ndata.set_index(keys=pd.to_datetime(df[1]),drop=True,inplace=True)"
+    },
+    {
+      "execution_count": 77,
+      "code_cell_id": 3,
+      "code": "data"
+    },
+    {
+      "execution_count": 78,
+      "code_cell_id": 4,
+      "code": "midprice = pd.DataFrame((df.iloc[:,2] + df.iloc[:,22] )/2,columns=['Price'] )\nmidprice['Time'] = pd.to_datetime(df[1])\nmidprice.set_index(keys='Time',inplace=True)"
+    },
+    {
+      "execution_count": 79,
+      "code_cell_id": 5,
+      "code": "midprice"
+    },
+    {
+      "execution_count": 80,
+      "code_cell_id": 6,
+      "code": "def labeling(data,k,alpha,type=1):\n data[\"MeanNegativeMid\"] = data['Price'].rolling(window=k).mean()\n data[\"MeanPositiveMid\"] = data[\"MeanNegativeMid\"].shift(-(k-1))\n if type == 1:\n data[\"SmoothingLabel\"] = (data[\"MeanPositiveMid\"] - data['Price']) / data['Price']\n elif type == 2:\n data[\"SmoothingLabel\"] = (data[\"MeanPositiveMid\"] - data[\"MeanNegativeMid\"]) / data[\"MeanNegativeMid\"]\n labels_np = data[\"SmoothingLabel\"].dropna()\n data[k] = None\n data.loc[labels_np.index, k] = 0\n data.loc[data[\"SmoothingLabel\"] < -alpha, k] = -1\n data.loc[data[\"SmoothingLabel\"] > alpha, k] = 1\n return data"
+    },
+    {
+      "execution_count": 81,
+      "code_cell_id": 7,
+      "code": "label = labeling(midprice,k=10,alpha=0.00001)\n\nlabel.dropna(inplace=True)\ndata= data.loc[label.index]"
+    },
+    {
+      "execution_count": 82,
+      "code_cell_id": 8,
+      "code": "window_size=86400\ncol_mean = data.rolling(window_size).mean()\ncol_std = data.rolling(window_size).std()\n\ndata = (data - col_mean)/col_std\ndata.dropna(inplace=True)"
+    },
+    {
+      "execution_count": 83,
+      "code_cell_id": 9,
+      "code": "label = label.loc[data.index,10]\nlabel = tf.keras.utils.to_categorical(label,num_classes=3)"
+    },
+    {
+      "execution_count": 84,
+      "code_cell_id": 10,
+      "code": "class DataSegmentation(tf.keras.utils.Sequence):\n def __init__(self, X, Y,number_features,window_size,batch_size):\n self.X, self.Y = X.reset_index(drop=True), Y\n self.window_size = window_size\n self.batch_size = batch_size\n self.number_features = number_features\n\n def __len__(self):\n return math.floor((len(self.X)-self.window_size)/ self.batch_size)\n def __getitem__(self, idx):\n dataX =[]\n dataY=[]\n idx+=self.window_size\n for i in range(self.batch_size):\n x_sample=self.X.loc[idx-self.window_size:idx-1]\n y_sample=self.Y[idx]\n dataX.append(x_sample)\n dataY.append(y_sample)\n idx+=1\n dataX = np.array(dataX).reshape(-1,self.window_size,self.number_features)\n dataY = np.array(dataY)\n return dataX,dataY"
+    },
+    {
+      "execution_count": 85,
+      "code_cell_id": 11,
+      "code": "batch_size= 20\nwindow_size= 300\nnumber_features = 40\nTrain_size = math.floor(len(data)*0.6)\nValidation_size = math.floor(len(data)*0.15)\nTrainBatch = DataSegmentation(data.iloc[:Train_size],label[:Train_size],number_features,window_size,batch_size)\nValidationBatch = DataSegmentation(data.iloc[Train_size:Train_size+Validation_size],label[Train_size:Train_size+Validation_size],number_features,window_size,batch_size)\nTestBatch = DataSegmentation(data.iloc[Train_size+Validation_size:],label[Train_size+Validation_size:],number_features,window_size,batch_size)"
+    },
+    {
+      "execution_count": 86,
+      "code_cell_id": 12,
+      "code": "gpus = tf.config.experimental.list_physical_devices('GPU')\nif gpus:\n try:\n\n for gpu in gpus:\n tf.config.experimental.set_memory_growth(gpu, True)\n logical_gpus = tf.config.experimental.list_logical_devices('GPU')\n print(len(gpus), \"Physical GPUs,\", len(logical_gpus), \"Logical GPUs\")\n except RuntimeError as e:\n\n print(e)\n\nimport os\nimport logging\nimport glob\nimport argparse\nimport sys\nimport time\nimport pandas as pd\nimport pickle\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom collections import Counter\n\nnp.random.seed(1)\ntf.random.set_seed(2)"
+    },
+    {
+      "execution_count": 87,
+      "code_cell_id": 13,
+      "code": "def create_deeplob(T, NF, number_of_lstm):\n input_lmd = Input(shape=(T, NF, 1))\n\n conv_first1 = Conv2D(32, (1, 2), strides=(1, 2))(input_lmd)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (4, 1), padding='same')(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (4, 1), padding='same')(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (1, 2), strides=(1, 2))(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (4, 1), padding='same')(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (4, 1), padding='same')(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (1, 10))(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (4, 1), padding='same')(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n conv_first1 = Conv2D(32, (4, 1), padding='same')(conv_first1)\n conv_first1 = keras.layers.LeakyReLU(alpha=0.01)(conv_first1)\n\n convsecond_1 = Conv2D(64, (1, 1), padding='same')(conv_first1)\n convsecond_1 = keras.layers.LeakyReLU(alpha=0.01)(convsecond_1)\n convsecond_1 = Conv2D(64, (3, 1), padding='same')(convsecond_1)\n convsecond_1 = keras.layers.LeakyReLU(alpha=0.01)(convsecond_1)\n convsecond_2 = Conv2D(64, (1, 1), padding='same')(conv_first1)\n convsecond_2 = keras.layers.LeakyReLU(alpha=0.01)(convsecond_2)\n convsecond_2 = Conv2D(64, (5, 1), padding='same')(convsecond_2)\n convsecond_2 = keras.layers.LeakyReLU(alpha=0.01)(convsecond_2)\n convsecond_3 = MaxPooling2D((3, 1), strides=(1, 1), padding='same')(conv_first1)\n convsecond_3 = Conv2D(64, (1, 1), padding='same')(convsecond_3)\n convsecond_3 = keras.layers.LeakyReLU(alpha=0.01)(convsecond_3)\n convsecond_output = keras.layers.concatenate([convsecond_1, convsecond_2, convsecond_3], axis=3)\n conv_reshape = Reshape((int(convsecond_output.shape[1]), int(convsecond_output.shape[3])))(convsecond_output)\n conv_reshape = keras.layers.Dropout(0.2, noise_shape=(None, 1, int(conv_reshape.shape[2])))(conv_reshape, training=True)\n\n conv_lstm = LSTM(number_of_lstm)(conv_reshape)\n\n out = Dense(3, activation='softmax')(conv_lstm)\n model = Model(inputs=input_lmd, outputs=out)\n adam = Adam(learning_rate=0.0001)\n model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])\n return model"
+    },
+    {
+      "execution_count": 88,
+      "code_cell_id": 14,
+      "code": "model = create_deeplob(300,40,64)"
+    },
+    {
+      "execution_count": 89,
+      "code_cell_id": 15,
+      "code": "checkpoint_filepath = 'data.weights.h5'\nmodel_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(\n filepath=checkpoint_filepath,\n save_weights_only=True,\n monitor='val_loss',\n mode='auto',\n save_best_only=True)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 18,
+    "code": "plt.plot(history.history['accuracy'],label='Train Accuracy')\nplt.plot(history.history['val_accuracy'],label='Validation Accuracy')\nplt.title('Accuracy Per epoch')\nplt.ylabel('Accuracy')\nplt.xlabel('Epoch')\nplt.show()"
+  }
+}

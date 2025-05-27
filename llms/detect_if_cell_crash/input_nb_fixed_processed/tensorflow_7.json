@@ -1,0 +1,58 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 2,
+      "code": "import tensorflow as tf\n\nimport matplotlib.pyplot as plt\nimport numpy as np\nfrom transformers import BertTokenizer, TFBertModel"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 3,
+      "code": "try:\n tpu=tf.distribute.cluster_resolver.TCPClusterResolver()\n\n print(\"Device : \",tpu.master())\n tf.config.experimental_connect_to_cluster(tpu)\n\n tf.tpu.experimental.initialize_tpu_system(tpu)\n\n strategy=tf.distribute.experimental.TPUStrategy(tpu)\n\nexcept:\n strategy=tf.distribute.get_strategy()\n\nprint(\"Number of replicas : \",strategy.num_replicas_in_sync)\n\nprint(tf.__version__)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 13,
+      "code": "import pandas as pd\n\ntrain = pd.read_csv(\"data/train.csv\")\ntrain = train[:10]"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 14,
+      "code": "train.head()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 48,
+      "code": "model_name = 'bert-base-multilingual-cased'\ntokenizer = BertTokenizer.from_pretrained(model_name)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 49,
+      "code": "def encode_sentence(s):\n tokens = list(tokenizer.tokenize(s))\n tokens.append('[SEP]')\n return tokenizer.convert_tokens_to_ids(tokens)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 51,
+      "code": "def bert_encode(hypotheses, premises, tokenizer):\n\n num_examples = len(hypotheses)\n\n sentence1 = tf.ragged.constant([\n encode_sentence(s)\n for s in np.array(hypotheses)])\n sentence2 = tf.ragged.constant([\n encode_sentence(s)\n for s in np.array(premises)])\n\n cls = [tokenizer.convert_tokens_to_ids(['[CLS]'])]*sentence1.shape[0]\n input_word_ids = tf.concat([cls, sentence1, sentence2], axis=-1)\n\n input_mask = tf.ones_like(input_word_ids).to_tensor()\n\n type_cls = tf.zeros_like(cls)\n type_s1 = tf.zeros_like(sentence1)\n type_s2 = tf.ones_like(sentence2)\n input_type_ids = tf.concat(\n [type_cls, type_s1, type_s2], axis=-1).to_tensor()\n\n inputs = {\n 'input_word_ids': input_word_ids.to_tensor(),\n 'input_mask': input_mask,\n 'input_type_ids': input_type_ids}\n\n return inputs"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 52,
+      "code": "train_input = bert_encode(train.premise.values, train.hypothesis.values, tokenizer)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 54,
+      "code": "max_len = train_input['input_word_ids'].shape[1]\n\nfrom transformers import BertTokenizer, TFBertModel\n\ndef build_model():\n bert_encoder = TFBertModel.from_pretrained(model_name)\n input_word_ids = tf.keras.Input(shape=(max_len,), dtype=tf.int32, name=\"input_word_ids\")\n input_mask = tf.keras.Input(shape=(max_len,), dtype=tf.int32, name=\"input_mask\")\n input_type_ids = tf.keras.Input(shape=(max_len,), dtype=tf.int32, name=\"input_type_ids\")\n\n embedding = bert_encoder([input_word_ids, input_mask, input_type_ids])[0]\n output = tf.keras.layers.Dense(3, activation='softmax')(embedding[:,0,:])\n\n model = tf.keras.Model(inputs=[input_word_ids, input_mask, input_type_ids], outputs=output)\n model.compile(tf.keras.optimizers.Adam(lr=1e-5), loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n\n return model"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 55,
+      "code": "with strategy.scope():\n model = build_model()\n model.summary()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 56,
+    "code": "model.fit(train_input, train.label.values, epochs = 2, verbose = 1, batch_size = 64, validation_split = 0.2)"
+  }
+}

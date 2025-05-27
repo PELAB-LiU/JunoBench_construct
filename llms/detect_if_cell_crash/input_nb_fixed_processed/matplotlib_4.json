@@ -1,0 +1,48 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport os\nimport PIL\nimport tensorflow as tf\nfrom tensorflow import keras\nfrom tensorflow.keras import layers\nfrom tensorflow.python.keras.layers import Dense, Flatten\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras.optimizers import Adam"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 1,
+      "code": "import pathlib\ndata_dir = \"data_small/Training_Handwritten_marathi_Character_Fusion/Data_set\"\ndata_dir = pathlib.Path(data_dir)\nprint(data_dir)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 2,
+      "code": "ch1 = list(data_dir.glob('C1/*'))\nprint(ch1[0])\nPIL.Image.open(str(ch1[0]))"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 3,
+      "code": "img_height,img_width=200,200\nbatch_size=32\ntrain_ds = tf.keras.preprocessing.image_dataset_from_directory(\n data_dir,\n validation_split=0.25,\n subset=\"training\",\n seed=123,\n label_mode ='categorical',\n image_size=(img_height, img_width),\n batch_size=batch_size)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 4,
+      "code": "train_ds"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 5,
+      "code": "val_ds = tf.keras.preprocessing.image_dataset_from_directory(\n data_dir,\n validation_split=0.25,\n subset=\"validation\",\n seed=123,\n label_mode ='categorical',\n image_size=(img_height, img_width),\n batch_size=batch_size)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 6,
+      "code": "val_ds"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 7,
+      "code": "class_names = train_ds.class_names\nprint(class_names)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 8,
+    "code": "import matplotlib.pyplot as plt\n\nplt.figure(figsize=(10, 10))\nfor images, labels in train_ds.take(1):\n for i in range(6):\n ax = plt.subplot(3, 3, i + 1)\n plt.imshow(images[i].numpy().astype(\"uint8\"))\n\n plt.title(class_names[tf.argmax(labels[i])])\n\n plt.axis(\"off\")"
+  }
+}

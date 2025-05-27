@@ -1,0 +1,93 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport plotly.express as px"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df=pd.read_csv(\"data/Methane_final.csv\")"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.columns"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 10,
+      "code": "df.reason=df.reason.astype('category')\ndf.type=df.type.astype('category')\ndf.region=df.region.astype('category')"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 11,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 12,
+      "code": "df.drop(columns=['Unnamed: 0'],inplace=True)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 13,
+      "code": "df.head(2)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 14,
+      "code": "df.emissions=df.emissions.apply(lambda x:round(x,2))"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 15,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 16,
+      "code": "df.duplicated().sum()"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 17,
+      "code": "df.describe().T"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 18,
+      "code": "df.baseYear.value_counts()"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 20,
+      "code": "df.baseYear=df.baseYear.replace(\"2019-2021\",2020)"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 21,
+      "code": "df.baseYear.value_counts()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 29,
+    "code": "df6=df.groupby('region', observed=True).get_group('Asia Pacific').sort_values(by='%percent emission')"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import numpy as np\nimport pandas as pd"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 2,
+      "code": "df=pd.read_csv('data/data.csv')"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 3,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 4,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 6,
+      "code": "from sklearn.linear_model import LinearRegression\nmodel = LinearRegression()"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 13,
+      "code": "categorical_columns = ['street', 'city', 'statezip', 'country']\ndf = pd.get_dummies(df, columns=categorical_columns, drop_first=True)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 15,
+      "code": "df"
+    }
+  ],
+  "target": {
+    "code_cell_id": 18,
+    "code": "X = df.drop(columns=['date','price'])\ny = df['price']"
+  }
+}

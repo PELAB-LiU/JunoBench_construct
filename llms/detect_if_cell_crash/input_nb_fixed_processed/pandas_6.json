@@ -1,0 +1,38 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport warnings\nwarnings.filterwarnings('ignore')\nimport os\nfor dirname, _, filenames in os.walk('/kaggle/input'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df= pd.read_csv(r'data/Retailsales.csv')\ndf=df.drop(columns='Unnamed: 0')\ndf.head()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df=df.dropna(how='all')\ndf"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "df.isnull().sum()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 6,
+    "code": ""
+  }
+}

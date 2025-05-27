@@ -1,0 +1,38 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import tensorflow as tf\nfrom tensorflow import keras"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "inp = tf.random.normal((4, 28, 28, 3))\nconv2d = keras.layers.Conv2D(filters=8, kernel_size=3, activation=\"relu\", input_shape=(28, 28, 3))\nout = conv2d(inp)\nprint(out.shape)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "conv2d = keras.layers.Conv2D(filters=8, kernel_size=3, activation=\"relu\", input_shape=(28, 28, 3), padding=\"same\")\nconv2d(inp).shape"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "conv2d = keras.layers.Conv2D(filters=8, kernel_size=3, activation=\"relu\", input_shape=(28, 28, 3), padding=\"same\", strides=(2, 2))\nconv2d(inp).shape"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "print(inp.shape)\npool2d = keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))\nprint(pool2d(inp).shape)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "from tensorflow import keras\n\n(train_images, train_labels), (test_images, test_labels) = keras.datasets.cifar10.load_data()\ntrain_images.shape, train_labels.shape, test_images.shape, test_labels.shape"
+    }
+  ],
+  "target": {
+    "code_cell_id": 6,
+    "code": "import matplotlib.pyplot as plt\n\nclass_names = \"airplane automobile bird cat deer dog frog horse ship truck\".split()\n\nplt.figure(figsize=(10, 10))\nfor i in range(25):\n plt.subplot(5, 5, i+1)\n plt.imshow(train_images[i].astype(\"uint8\"))\n\n plt.title(class_names[train_labels[i, 0]])\n\n plt.axis(\"off\")"
+  }
+}

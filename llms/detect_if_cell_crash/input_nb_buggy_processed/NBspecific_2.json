@@ -1,0 +1,53 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nfrom matplotlib import pyplot as plt\nimport seaborn as sns\n\nfrom sklearn import metrics\nfrom sklearn import preprocessing\nfrom sklearn import model_selection\nfrom sklearn.metrics import classification_report, confusion_matrix, roc_curve, roc_auc_score,auc, accuracy_score\n\nfrom sklearn.preprocessing import StandardScaler, MinMaxScaler\n\nfrom sklearn.model_selection import train_test_split\n\nfrom IPython.core.display import HTML"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "from sklearn.model_selection import learning_curve\ndef plot_learning_curve(est, X_train, y_train) :\n train_sizes, train_scores, test_scores = learning_curve(estimator=est, X=X_train, y=y_train, train_sizes=np.linspace(0.1, 1.0, 10),\n cv=5,\n n_jobs=-1)\n train_mean = np.mean(train_scores, axis=1)\n train_std = np.std(train_scores, axis=1)\n test_mean = np.mean(test_scores, axis=1)\n test_std = np.std(test_scores, axis=1)\n plt.figure(figsize=(8,10))\n plt.plot(train_sizes, train_mean, color='blue', marker='o', markersize=5, label='training accuracy')\n plt.fill_between(train_sizes, train_mean + train_std, train_mean - train_std, alpha=0.15, color='blue')\n plt.plot(train_sizes, test_mean,color='green', linestyle='--',marker='s', markersize=5,label='validation accuracy')\n plt.fill_between(train_sizes,test_mean + test_std,test_mean - test_std,alpha=0.15, color='green')\n plt.grid(b='on')\n plt.xlabel('Number of training samples')\n plt.ylabel('Accuracy')\n plt.legend(loc='lower right')\n plt.ylim([0.6, 1.0])\n plt.show()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "def plot_roc_curve(est,X_test,y_test) :\n probas = est.predict_proba(X_test)\n false_positive_rate, true_positive_rate, thresholds = roc_curve(y_test,probas[:, 1])\n roc_auc = auc(false_positive_rate, true_positive_rate)\n plt.figure(figsize=(8,8))\n plt.title('Receiver Operating Characteristic')\n plt.plot(false_positive_rate, true_positive_rate, 'b', label='AUC = %0.2f'% roc_auc)\n plt.legend(loc='lower right')\n plt.plot([0,1],[0,1],'r--')\n plt.plot([0,0,1],[0,1,1],'g:')\n plt.xlim([-0.05,1.2])\n plt.ylim([-0.05,1.2])\n plt.ylabel('Taux de vrais positifs')\n plt.xlabel('Taux de faux positifs')\n plt.show"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df = pd.read_csv('data/fashion-mnist_train.csv.zip')"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "labels = [\"T-shirt/top\",\"Trouser\",\"Pullover\",\"Dress\",\"Coat\",\"Sandal\",\"Shirt\",\n \"Sneaker\",\"Bag\",\"Ankle boot\"]"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "print(labels[df.label[0]])"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 9,
+      "code": "y = df['label'].values\nX = df.drop(['label'] , axis=1).values"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 10,
+      "code": "X = X/255"
+    }
+  ],
+  "target": {
+    "code_cell_id": 20,
+    "code": "from xgboost import XGBClassifier\n\nclassifier = XGBClassifier(tree_method='gpu_hist', gpu_id=0)\n\nclassifier.fit(X_train, y_train)\ny_hat = classifier.predict(X_test)\naccuracy_score(y_test, y_hat)"
+  }
+}

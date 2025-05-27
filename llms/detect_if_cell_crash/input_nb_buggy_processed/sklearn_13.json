@@ -1,0 +1,28 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport matplotlib.pyplot as plt\nimport numpy as np"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv(\"data/SalaryData_Test(1).csv\")"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 5,
+      "code": "x = df.workclass.values"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 7,
+      "code": "x = df.workclass.values.reshape(-1,1)\ny = df.Salary.values.reshape(-1,1)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 8,
+    "code": "from sklearn.linear_model import LinearRegression\n\nlinear_reg = LinearRegression()\nlinear_reg.fit(x,y)"
+  }
+}

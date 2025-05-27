@@ -1,0 +1,33 @@
+{
+  "executed": [
+    {
+      "execution_count": 2,
+      "code_cell_id": 0,
+      "code": "import numpy\nimport matplotlib.pyplot as plt\nimport os\n\nfrom keras.models import Sequential\nfrom keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout\nfrom tensorflow.keras.preprocessing.image import ImageDataGenerator"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 1,
+      "code": "path = 'data_small/cat-and-dog'"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 2,
+      "code": "src_path_train = 'data_small/training_set'\nsrc_path_test = 'data_small/test_set'\n\ntrain_datagen = ImageDataGenerator(\n rescale = 1 / 255.0,\n\n validation_split = 0.20)\n\ntest_datagen = ImageDataGenerator(rescale = 1 / 255.0)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 3,
+      "code": "batch_size = 30\ntrain_generator = train_datagen.flow_from_directory(\n directory= src_path_train,\n target_size= (223, 223),\n color_mode= \"rgb\",\n batch_size= batch_size,\n class_mode= \"categorical\",\n subset= 'training',\n shuffle= True,\n seed= 40\n)\nvalid_generator = train_datagen.flow_from_directory(\n directory= src_path_train,\n target_size= (223, 223),\n color_mode= \"rgb\",\n batch_size= batch_size,\n class_mode= \"categorical\",\n subset= 'validation',\n shuffle= True,\n seed= 40\n)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 4,
+      "code": "test_generator = test_datagen.flow_from_directory(\n directory=src_path_test,\n target_size=(223, 223),\n color_mode=\"rgb\",\n batch_size=1,\n class_mode=\"categorical\",\n shuffle=False,\n seed=40\n)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 5,
+    "code": "def prepare_model():\n model = Sequential()\n model.add(Conv2D(32,kernel_size=(3,3),activation='relu',input_shape=(100, 100, 3)))\n model.add(MaxPooling2D(pool_size=(2, 2)))\n model.add(Flatten())\n model.add(Dense(16, activation='relu'))\n model.add(Dense(2, activation='softmax'))\n model.compile(loss=\"categorical_crossentropy\",optimizer=\"adam\",metrics=['accuracy'])\n return model\nmodel = prepare_model()\nmodel.fit(train_generator,\n validation_data = valid_generator,\n epochs=5)\nmodel.evaluate(test_generator)"
+  }
+}

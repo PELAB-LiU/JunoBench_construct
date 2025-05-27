@@ -1,0 +1,23 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np;\nimport pandas as pd;\nimport seaborn as sn;\nimport matplotlib.pyplot as plt;"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/googleplaystore.csv');"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 11,
+      "code": "df.drop([10472],inplace = True);"
+    }
+  ],
+  "target": {
+    "code_cell_id": 11,
+    "code": "df.drop([10472],inplace = True);"
+  }
+}

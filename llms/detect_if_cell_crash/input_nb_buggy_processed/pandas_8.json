@@ -1,0 +1,213 @@
+{
+  "executed": [
+    {
+      "execution_count": 24,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd"
+    },
+    {
+      "execution_count": 85,
+      "code_cell_id": 1,
+      "code": "df=pd.read_csv(\"/kaggle/input/cars-dataset/2. Cars Data1.csv\")"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 2,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 27,
+      "code_cell_id": 3,
+      "code": "df.columns"
+    },
+    {
+      "execution_count": 28,
+      "code_cell_id": 4,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 29,
+      "code_cell_id": 5,
+      "code": "df[\"DriveTrain\"].unique()"
+    },
+    {
+      "execution_count": 30,
+      "code_cell_id": 6,
+      "code": "df[\"DriveTrain\"]=df[\"DriveTrain\"].astype(\"category\")"
+    },
+    {
+      "execution_count": 31,
+      "code_cell_id": 7,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 53,
+      "code_cell_id": 9,
+      "code": "df[\"Origin\"].unique()"
+    },
+    {
+      "execution_count": 56,
+      "code_cell_id": 10,
+      "code": "df[\"Origin\"]=df[\"Origin\"].astype(\"category\")"
+    },
+    {
+      "execution_count": 57,
+      "code_cell_id": 11,
+      "code": "df[\"Type\"].unique()"
+    },
+    {
+      "execution_count": 58,
+      "code_cell_id": 12,
+      "code": "df[\"Type\"]=df[\"Type\"].astype(\"category\")"
+    },
+    {
+      "execution_count": 35,
+      "code_cell_id": 13,
+      "code": ""
+    },
+    {
+      "execution_count": 59,
+      "code_cell_id": 14,
+      "code": "df.Make.unique()"
+    },
+    {
+      "execution_count": 60,
+      "code_cell_id": 15,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 61,
+      "code_cell_id": 16,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 62,
+      "code_cell_id": 17,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 63,
+      "code_cell_id": 18,
+      "code": "df.head(2)"
+    },
+    {
+      "execution_count": 86,
+      "code_cell_id": 19,
+      "code": "df.dropna(axis=0, how='all',inplace=True)"
+    },
+    {
+      "execution_count": 87,
+      "code_cell_id": 20,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 88,
+      "code_cell_id": 21,
+      "code": "df.isna().sum()"
+    },
+    {
+      "execution_count": 89,
+      "code_cell_id": 22,
+      "code": "x=df.Cylinders.mean()\ndf.Cylinders.fillna(value=x, inplace=True)"
+    },
+    {
+      "execution_count": 90,
+      "code_cell_id": 23,
+      "code": "df.isna().sum()"
+    },
+    {
+      "execution_count": 69,
+      "code_cell_id": 24,
+      "code": "df.duplicated().sum()"
+    },
+    {
+      "execution_count": 47,
+      "code_cell_id": 25,
+      "code": "df.Make.count()"
+    },
+    {
+      "execution_count": 48,
+      "code_cell_id": 26,
+      "code": "df.Make.value_counts()"
+    },
+    {
+      "execution_count": 49,
+      "code_cell_id": 27,
+      "code": "df.head(2)"
+    },
+    {
+      "execution_count": 70,
+      "code_cell_id": 28,
+      "code": "df[(df[\"Origin\"]==\"Asia\") | (df[\"Origin\"]==\"Europe\")]"
+    },
+    {
+      "execution_count": 51,
+      "code_cell_id": 29,
+      "code": "df.groupby(\"Origin\").get_group(\"Asia\", \"Europe\")"
+    },
+    {
+      "execution_count": 71,
+      "code_cell_id": 30,
+      "code": "df[df.Origin.isin([\"Asia\",\"Europe\"])]"
+    },
+    {
+      "execution_count": 72,
+      "code_cell_id": 31,
+      "code": "df1=df[df.Weight>4000]"
+    },
+    {
+      "execution_count": 74,
+      "code_cell_id": 32,
+      "code": "df1.shape"
+    },
+    {
+      "execution_count": 73,
+      "code_cell_id": 33,
+      "code": "df[~(df.Weight>4000)]"
+    },
+    {
+      "execution_count": 76,
+      "code_cell_id": 34,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 82,
+      "code_cell_id": 35,
+      "code": ""
+    },
+    {
+      "execution_count": 91,
+      "code_cell_id": 36,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 92,
+      "code_cell_id": 37,
+      "code": "df.head(2)"
+    },
+    {
+      "execution_count": 104,
+      "code_cell_id": 38,
+      "code": "y= df.MPG_City + 9"
+    },
+    {
+      "execution_count": 105,
+      "code_cell_id": 39,
+      "code": "df"
+    },
+    {
+      "execution_count": 108,
+      "code_cell_id": 40,
+      "code": "df.MPG_City= df.MPG_City.apply(lambda x:x+9)"
+    },
+    {
+      "execution_count": 107,
+      "code_cell_id": 41,
+      "code": "df"
+    }
+  ],
+  "target": {
+    "code_cell_id": 8,
+    "code": "df[\"MSRP\"]=pd.to_numeric(df[\"MSRP\"])"
+  }
+}

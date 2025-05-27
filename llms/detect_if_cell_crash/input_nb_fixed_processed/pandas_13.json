@@ -1,0 +1,98 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\n\nimport warnings\nwarnings.filterwarnings('ignore')\n\nimport os\n\nimport pickle\nfrom sklearn_pandas import DataFrameMapper\nfrom sklearn.preprocessing import OneHotEncoder,MinMaxScaler,StandardScaler,LabelEncoder\nfrom sklearn.model_selection import train_test_split,GridSearchCV\nfrom sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor\nfrom sklearn.metrics import mean_absolute_error,mean_squared_error,r2_score\n\nimport matplotlib.pyplot as plt"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/car data.csv')\ndf.head()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.isnull().sum()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df.describe(include='all')"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 8,
+      "code": "df.duplicated().sum()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 9,
+      "code": "df.drop_duplicates(inplace = True)\ndf.duplicated().sum()"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 12,
+      "code": "dfm = DataFrameMapper([(['Year'],StandardScaler()),\n (['Selling_Price'],None),\n (['Driven_kms'],MinMaxScaler()),\n ('Owner',None),\n (['Car_Name'],OneHotEncoder()),\n (['Fuel_Type'],OneHotEncoder()),\n (['Selling_type'],OneHotEncoder()),\n (['Transmission'],OneHotEncoder()),\n (['Present_Price'],MinMaxScaler())\n ],df_out=True)\ntransformed = dfm.fit_transform(df)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 13,
+      "code": "dfm2 = DataFrameMapper([(['Year'],None),\n (['Selling_Price'],None),\n (['Driven_kms'],None),\n ('Owner',None),\n (['Car_Name'],LabelEncoder()),\n (['Fuel_Type'],LabelEncoder()),\n (['Selling_type'],LabelEncoder()),\n (['Transmission'],LabelEncoder()),\n (['Present_Price'],None)\n ],df_out=True)\ntransformed2 = dfm2.fit_transform(df)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 14,
+      "code": "X = transformed.loc[:,~transformed.columns.isin(['Selling_Price'])]\ny = transformed.loc[:,'Selling_Price']\n\ndef changename(name):\n for i in range(len(df[name].unique())):\n s = name + '_' + str(i)\n X.columns = [col.replace(s, name + '_' + df[name].unique()[i]) for col in X.columns]\n\nchangename('Selling_type')\nchangename('Transmission')\nchangename('Fuel_Type')\nchangename('Car_Name')\n\nX.columns.tolist()"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 15,
+      "code": "X_ = transformed2.loc[:,~transformed2.columns.isin(['Selling_Price'])]\ny_ = transformed2.loc[:,'Selling_Price']"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 17,
+      "code": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=20)\n\nX_2_train, X_2_test, y_2_train, y_2_test = train_test_split(X_, y_, test_size=0.1, random_state=20)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 18,
+      "code": "gbr = GradientBoostingRegressor(random_state=20)\ngbr.fit(X_train,y_train)\ngbr_y_predict = gbr.predict(X_test)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 20,
+      "code": "gbr2 = GradientBoostingRegressor(random_state=20)\ngbr2.fit(X_2_train,y_2_train)\ngbr2_y_predict = gbr2.predict(X_2_test)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 21,
+      "code": "gbr_gs = GradientBoostingRegressor(loss='squared_error', n_estimators=133,random_state=20)\ngbr_gs.fit(X_2_train,y_2_train)\ngbr_gs_y_predict = gbr_gs.predict(X_2_test)\ngbr_gs.score(X_2_test,y_2_test)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 22,
+      "code": "rfr = RandomForestRegressor(random_state=20)\nrfr.fit(X_train,y_train)\nrfr_y_predict = rfr.predict(X_test)"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 23,
+      "code": "rfr2 = RandomForestRegressor(random_state=20)\nrfr2.fit(X_2_train,y_2_train)\nrfr2_y_predict = rfr2.predict(X_2_test)"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 25,
+      "code": "rfr_gs = RandomForestRegressor(criterion = 'friedman_mse',\n n_estimators = 136,\n random_state=20)\nrfr_gs.fit(X_2_train,y_2_train)\nrfr_gs_y_predict = rfr_gs.predict(X_2_test)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 29,
+    "code": "model_dict = {'X_train': [gbr, rfr],\n 'X_2_train': [gbr_gs, rfr_gs, gbr2, rfr2]}\n\nfor key in model_dict:\n f_list = []\n for model in model_dict[key]:\n feature_importance = model.feature_importances_\n f_list.append(feature_importance)\n\n fearture_names = X_train.columns.tolist() if key == 'X_train' else X_2_train.columns.tolist()\n\n f_index = ['gbr', 'rfr'] if key == 'X_train' else ['gbr_gs', 'rfr_gs', 'gbr2','rfr2']\n\n feature_df = pd.DataFrame(np.array(f_list), columns=fearture_names, index=f_index)\n display(feature_df)"
+  }
+}

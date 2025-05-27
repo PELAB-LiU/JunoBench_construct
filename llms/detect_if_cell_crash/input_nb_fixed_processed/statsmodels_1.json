@@ -1,0 +1,58 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nimport seaborn as sns\nimport matplotlib.pyplot as plt\nimport statsmodels.api as sm\nfrom scipy.stats import skew\nfrom sklearn.preprocessing import PowerTransformer\nfrom sklearn.linear_model import LinearRegression\nimport pylab as p\nfrom sklearn.metrics import accuracy_score\n%matplotlib inline"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "train=pd.read_csv('data/train.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "test = pd.read_csv('data/test.csv')"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 10,
+      "code": "train=train.drop(columns=['id'])"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 18,
+      "code": "train = train[train['gravity']<1.036]"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 21,
+      "code": "train = train[train['ph']<7.1]"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 28,
+      "code": "fig = sm.qqplot(train['osmo'],line=\"45\",fit=True)"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 29,
+      "code": "fig = sm.qqplot(train['urea'],line=\"45\",fit=True)"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 30,
+      "code": "fig = sm.qqplot(train['calc'],line=\"45\",fit=True)"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 31,
+      "code": "fig = sm.qqplot(train['cond'],line=\"45\",fit=True)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 27,
+    "code": "fig = sm.qqplot(train['gravity'],line=\"45\",fit=True)"
+  }
+}

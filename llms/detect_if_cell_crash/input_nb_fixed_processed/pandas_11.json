@@ -1,0 +1,43 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport tensorflow as tf\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sklearn.manifold import TSNE\nfrom sklearn.decomposition import PCA, TruncatedSVD\nimport matplotlib.patches as mpatches\nimport time\nimport plotly.figure_factory as ff\nfrom plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot\n\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.svm import SVC\nfrom sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\nimport collections\n\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.pipeline import make_pipeline\nfrom imblearn.pipeline import make_pipeline as imbalanced_make_pipeline\nfrom imblearn.over_sampling import SMOTE\nfrom imblearn.under_sampling import NearMiss\nfrom imblearn.metrics import classification_report_imbalanced\nfrom sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, accuracy_score, classification_report\nfrom collections import Counter\nfrom sklearn.model_selection import KFold, StratifiedKFold\nimport warnings\nwarnings.filterwarnings(\"ignore\")"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/creditcard.csv')\ndf.head()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 4,
+      "code": "colors = [\"#0101DF\", \"#DF0101\"]\n\nsns.countplot(x='Class', data=df, palette=colors)\nplt.title('Class Distributions \\n (0: No Fraud || 1: Fraud)', fontsize=14);"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 7,
+      "code": "data_df = df.copy()\ndata_df['Hour'] = data_df['Time'].apply(lambda x: np.floor(x / 3600))\n\ntmp = data_df.groupby(['Hour', 'Class'])['Amount'].aggregate(['min', 'max', 'count', 'sum', 'mean', 'median', 'var']).reset_index()\ndata_df_1 = pd.DataFrame(tmp)\ndata_df_1.columns = ['Hour', 'Class', 'Min', 'Max', 'Transactions', 'Sum', 'Mean', 'Median', 'Var']\ndata_df_1.head()"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 21,
+      "code": "from sklearn.model_selection import train_test_split\nfrom sklearn.model_selection import StratifiedShuffleSplit\n\nprint('No Frauds', round(df['Class'].value_counts()[0]/len(df) * 100,2), '% of the dataset')\nprint('Frauds', round(df['Class'].value_counts()[1]/len(df) * 100,2), '% of the dataset')\n\nX = df.drop('Class', axis=1)\ny = df['Class']\n\nsss = StratifiedKFold(n_splits=5, random_state=None, shuffle=False)\n\nfor train_index, test_index in sss.split(X, y):\n print(\"Train:\", train_index, \"Test:\", test_index)\n original_Xtrain, original_Xtest = X.iloc[train_index], X.iloc[test_index]\n original_ytrain, original_ytest = y.iloc[train_index], y.iloc[test_index]\n\noriginal_Xtrain = original_Xtrain.values\noriginal_Xtest = original_Xtest.values\noriginal_ytrain = original_ytrain.values\noriginal_ytest = original_ytest.values\n\ntrain_unique_label, train_counts_label = np.unique(original_ytrain, return_counts=True)\ntest_unique_label, test_counts_label = np.unique(original_ytest, return_counts=True)\nprint('-' * 100)\n\nprint('Label Distributions: \\n')\nprint(train_counts_label/ len(original_ytrain))\nprint(test_counts_label/ len(original_ytest))"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 22,
+      "code": "df = df.sample(frac=1)\n\nfraud_df = df.loc[df['Class'] == 1]\nnon_fraud_df = df.loc[df['Class'] == 0][:492]\n\nnormal_distributed_df = pd.concat([fraud_df, non_fraud_df])\n\nnew_df = normal_distributed_df.sample(frac=1, random_state=42)\n\nnew_df.head()"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 23,
+      "code": "print('Distribution of the Classes in the subsample dataset')\nprint(new_df['Class'].value_counts()/len(new_df))\n\nsns.countplot(data=new_df,x='Class', palette=colors)\n\nplt.title('Equally Distributed Classes', fontsize=14)\nplt.show()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 20,
+    "code": "var = data_df.columns.values\n\ni = 0\n\nt0 = data_df.loc[data_df['Class'] == 0]\nt1 = data_df.loc[data_df['Class'] == 1]\n\nsns.set_style('whitegrid')\nplt.figure()\nfig, ax = plt.subplots(8,4,figsize=(16,28))\n\nfor feature in var:\n i += 1\n plt.subplot(8,4,i)\n sns.kdeplot(t0[feature], bw=0.5,label=\"Class = 0\");\n sns.kdeplot(t1[feature], bw=0.5,label=\"Class = 1\");\n plt.xlabel(feature, fontsize=12)\n locs, labels = plt.xticks()\n plt.tick_params(axis='both', which='major', labelsize=12)\nplt.show();"
+  }
+}

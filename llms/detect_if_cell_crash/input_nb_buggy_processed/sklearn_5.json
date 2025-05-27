@@ -1,0 +1,48 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import confusion_matrix, accuracy_score\nimport matplotlib.pyplot as plt\nimport seaborn as sns"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "df= pd.read_csv(\"data/iris.csv\")"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 3,
+      "code": "df"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 4,
+      "code": "sns.pairplot(df)\nplt.show()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 5,
+      "code": "sns.pairplot(df,hue=\"petal_length\")\nplt.show()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 6,
+      "code": "X = df.drop(\"species\",axis=1)\nY = df[\"species\"]\nx_train, x_test , y_train, y_test=train_test_split (X ,Y , test_size=0.25, random_state=42)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 8,
+      "code": "clf = LogisticRegression()\nclf.fit(x_train, y_train)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 9,
+      "code": "y_pred = clf.predict(x_test)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 12,
+    "code": "from sklearn import metrics\nconfusion_matrix = metrics.confusion_matrix(y_test , y_pred)\n\ncm_display = metrics.ConfusionMatrixDisplay(confusion_matrix = confusion_matrix , display_labels=[False,True])\n\ncm_display.plot()\nplt.show()"
+  }
+}

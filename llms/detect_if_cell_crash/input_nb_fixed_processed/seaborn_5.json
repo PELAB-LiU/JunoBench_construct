@@ -1,0 +1,33 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\n%matplotlib inline\nimport seaborn as sns\nimport matplotlib.pyplot as plt\nimport cv2\nimport os\nimport warnings\nwarnings.filterwarnings('ignore')\nimport tensorflow as tf\nimport random\nimport albumentations as A\nfrom tensorflow.keras.preprocessing.image import ImageDataGenerator\nfrom tensorflow.keras.layers import Dense,Activation,Flatten, Conv2D, MaxPooling2D\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras.callbacks import ModelCheckpoint,EarlyStopping"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 1,
+      "code": "train_image_path = '../input/plant-pathology-2021-fgvc8/train_images'\ntest_image_path = '../input/plant-pathology-2021-fgvc8/test_images'\ntrain_df_path = 'data/train.csv'\ntest_df_path = 'data/sample_submission.csv'"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 2,
+      "code": "df_train = pd.read_csv(train_df_path)\ndf_test=pd.read_csv(test_df_path)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 3,
+      "code": "df_test"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 4,
+      "code": "df_train.labels.value_counts()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 5,
+    "code": "plt.figure(figsize=(15,12))\n\nlabels = sns.barplot(x=df_train.labels.value_counts().index, y=df_train.labels.value_counts())\n\nfor item in labels.get_xticklabels():\n item.set_rotation(45)"
+  }
+}

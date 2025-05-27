@@ -1,0 +1,38 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom scipy.stats import pearsonr, spearmanr, kendalltau,f_oneway\nsns.set(rc={'figure.figsize':(10, 8)});"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "df = pd.read_csv('data/bank-additional-full.csv', sep=';')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 5,
+      "code": "df['y'] = df['y'].map({\"no\":0,\"yes\":1})\ndf['contact'] = df['contact'].map({\"cellular\":0,\"telephone\":1})\ndf1 = pd.get_dummies(df, columns=['job','marital','education','default','housing','loan','month','day_of_week','poutcome'])\ndf1.head(6).T"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 8,
+      "code": "from sklearn.model_selection import train_test_split\nX_train, X_valid, y_train, y_valid = train_test_split(df1.drop('y', axis=1),\n df1['y'],\n test_size=0.25,\n random_state=42)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 9,
+      "code": "from sklearn.linear_model import LogisticRegression\nlog_reg = LogisticRegression()\nlog_reg.fit(X_train, y_train)\ny_pred = log_reg.predict(X_valid)\n\nfrom sklearn.metrics import accuracy_score\nprint(accuracy_score(y_valid, y_pred))"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 10,
+      "code": "from sklearn.metrics import precision_score, recall_score, f1_score\nprint('Precision:', precision_score(y_valid, y_pred))\nprint('Recall:', recall_score(y_valid, y_pred))\nprint('F1 score:', f1_score(y_valid, y_pred))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 19,
+    "code": "log_reg2 = LogisticRegression(max_iter=1000, solver='liblinear', penalty='elasticnet')\nlog_reg2.fit(X_train, y_train)\ny_pred = log_reg2.predict(X_valid)\n\nprint('F1 score:', f1_score(y_valid, y_pred, average = \"weighted\"))"
+  }
+}

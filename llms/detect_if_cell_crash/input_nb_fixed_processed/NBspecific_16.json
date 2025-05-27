@@ -1,0 +1,18 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import os\nimport math\nimport random\nimport warnings\n\nimport matplotlib.pyplot as plt\nimport seaborn as sns\n\nimport tensorflow as tf\n\nimport numpy as np\nimport pandas as pd"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "HEIGHT = 224\nWIDTH = 224\nCHANNELS = 3\n\nINPUT_SHAPE = (HEIGHT, WIDTH, CHANNELS)\nLEARNING_RATE = 0.00001\n\nEPOCHS = 3\nBATCH_SIZE = 32\n\nDROPOUT = 0.5"
+    }
+  ],
+  "target": {
+    "code_cell_id": 5,
+    "code": "skin_df.head()"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport seaborn as sns\nfrom matplotlib import pyplot as plt\n\nfrom sklearn.metrics import *\nfrom sklearn.model_selection import *\n\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.tree import DecisionTreeClassifier"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv(\"data/penguins.csv\")"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.head(10)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df=df.dropna()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "df[\"sex\"] = df[\"sex\"].map({\"male\" : 0,\"female\" : 1})"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "df.head()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 7,
+    "code": "sns.violinplot(df, x='species')"
+  }
+}

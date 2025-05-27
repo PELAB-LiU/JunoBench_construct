@@ -1,0 +1,33 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "data = pd.read_csv('data/yahoo_stock.csv', parse_dates = ['Date'], index_col = 'Date')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 5,
+      "code": "data=data.dropna()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 8,
+      "code": "data.drop(data.tail(1).index,inplace=True)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 12,
+      "code": "from statsmodels.tsa.seasonal import seasonal_decompose\ndef decompose(data, column_name):\n multiplicative_model = seasonal_decompose(data[column_name], model='multiplicative', extrapolate_trend = 'freq')\n\n additive_model = seasonal_decompose(data[column_name], model = 'additive', extrapolate_trend='freq')\n plt.rcParams.update({'figure.figsize': (20, 10)})\n multiplicative_model.plot().suptitle('Multiplicative Decompose', fontsize=30)\n additive_model.plot().suptitle('Additive Decompose', fontsize=30)\n plt.show()\n return multiplicative_model, additive_model"
+    }
+  ],
+  "target": {
+    "code_cell_id": 13,
+    "code": "multiplicative_model"
+  }
+}

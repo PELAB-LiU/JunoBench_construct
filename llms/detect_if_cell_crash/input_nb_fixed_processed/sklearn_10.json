@@ -1,0 +1,88 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "from sklearn.model_selection import KFold\nfrom sklearn import linear_model\nfrom sklearn.metrics import make_scorer\n\nfrom sklearn import svm\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom sklearn.linear_model import LinearRegression\n\nfrom sklearn import neighbors\nfrom math import sqrt\n\nimport os\nfor dirname, _, filenames in os.walk('/kaggle/input'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/measures_v2.csv',\n usecols=[0,1,2,3,4,5,6,7,8,9,10,11])\ndf.head(10)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.describe().T"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df.isnull().values.any()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "nans=pd.isnull(df).sum()\nnans[nans>0]"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "df.dtypes.value_counts()"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "df.corr()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 26,
+      "code": "X=df.drop(\"motor_speed\", axis=1)\ny=df[\"motor_speed\"]"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 27,
+      "code": "from sklearn.model_selection import train_test_split,cross_val_score,cross_val_predict\n\nX_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2, random_state=42)\n\ntraining=df.copy()"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 28,
+      "code": "X_test.shape"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 46,
+      "code": "from sklearn.model_selection import GridSearchCV\nfrom sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier\nfrom sklearn.neighbors import KNeighborsRegressor\nfrom sklearn.ensemble import BaggingRegressor\nfrom sklearn.ensemble import RandomForestRegressor\n\nfrom warnings import filterwarnings\nfilterwarnings('ignore')"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 54,
+      "code": "from sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.metrics import r2_score,mean_squared_error"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 57,
+      "code": "from xgboost import XGBRegressor,XGBModel\nfrom sklearn.model_selection import train_test_split,cross_val_score,cross_validate,KFold"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 58,
+      "code": "params = {}\nparams['tree_method'] = 'gpu_hist'\nparams['predictor'] = 'gpu_predictor'\nparams['n_jobs'] = 4\n\nmodel = XGBRegressor()\nmodel.fit(X_train,y_train)\ny_pred = model.predict(X_test)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 59,
+      "code": "np.sqrt(mean_squared_error(y_test,y_pred))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 60,
+    "code": "params = {}\nparams['tree_method'] = 'hist'\nparams['predictor'] = 'predictor'\nparams['n_jobs'] = 4\n\nn_splits = 10\ntest_preds = None\nkf_rmse = []\nfor fold, (train_idx, valid_idx) in enumerate(KFold(n_splits=n_splits, shuffle=True).split(X_train,y_train)):\n\n X_train_fold, y_train_fold = X_train.iloc[train_idx], y_train.iloc[train_idx]\n X_valid_fold, y_valid_fold = X_train.iloc[valid_idx], y_train.iloc[valid_idx]\n\n model = XGBRegressor(**params)\n model.fit(X_train_fold, y_train_fold,\n eval_set=[(X_valid_fold, y_valid_fold)],\n eval_metric='rmse', verbose=False)\n\n valid_pred = model.predict(X_valid_fold)\n\n rmse = np.sqrt(mean_squared_error(y_valid_fold, valid_pred))\n\n print(f'Fold {fold+1}/{n_splits} RMSE: {rmse:.4f}')\n kf_rmse.append(rmse)\n\n if test_preds is None:\n test_preds = model.predict(X_test)\n else:\n\n test_preds += model.predict(X_test)\n\ntest_preds /= n_splits\nprint(f'Average KFold RMSE: {np.mean(np.array(kf_rmse)):.5f}')"
+  }
+}

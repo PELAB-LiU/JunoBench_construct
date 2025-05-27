@@ -1,0 +1,18 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import pandas as pd\nimport os\nimport numpy as np\nfrom sklearn.model_selection import KFold\nfrom sklearn.preprocessing import LabelEncoder\nimport sklearn.metrics\n\ntrain = pd.read_csv('data/train.csv.zip', index_col=\"PetID\")\ntest = pd.read_csv('data/test.csv.zip', index_col=\"PetID\")"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "name_count = train[\"Name\"].value_counts().rename(\"name_count\")\n\nRescuerID = LabelEncoder().fit(train[\"RescuerID\"].to_list()+test[\"RescuerID\"].to_list())\n\ndef procData(data, name_count, RescuerID):\n\n data[\"RescuerID\"] = RescuerID.transform(data[\"RescuerID\"])\n data[\"RescuerID\"] = data[\"RescuerID\"].fillna(-1)\n\n data[\"NameNull\"] = data[\"Name\"].isnull()\n data[\"NameLen\"] = data[\"Name\"].fillna(\"\").str.len()\n data[\"SinNombre\"] = data[\"Name\"].str.lower().replace(\" \", \"\") == \"nonameyet\"\n\n data[\"name_count\"] = data['Name'].map(name_count)\n data[\"name_count\"] = data[\"name_count\"].fillna(0)\n\n data = data.drop([\"Name\", \"RescuerID\", \"Description\"], axis=1)\n return data"
+    }
+  ],
+  "target": {
+    "code_cell_id": 3,
+    "code": "train = procData(train, name_count, RescuerID)\ntest = procData(test, name_count, RescuerID)"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "from IPython.display import Image, display\nimport os\nimport random\n\ndirectory_path = 'data_small/indoorCVPR_09/Images/'\n\ndef load_random_image_from_category(category_path):\n\n image_files = [file for file in os.listdir(category_path) if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]\n\n random_image = random.choice(image_files)\n\n return random_image\n\ncategories = os.listdir(directory_path)\n\nnum_classes = 5\n\nselected_categories = random.sample(categories, num_classes)\n\nfor category_name in selected_categories:\n category_path = os.path.join(directory_path, category_name)\n\n if os.path.isdir(category_path):\n random_image_name = load_random_image_from_category(category_path)\n random_image_path = os.path.join(category_path, random_image_name)\n\n print(f\"Category: {category_name}\")\n display(Image(filename=random_image_path))\n print(\"\\n\" + \"=\"*30 + \"\\n\")"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 8,
+      "code": "from torchvision.datasets import ImageFolder\nimport torchvision.transforms as transforms\n\ntransformations = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])\n\ndataset = ImageFolder(directory_path, transform = transformations)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 9,
+      "code": "dataset"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 10,
+      "code": "import matplotlib.pyplot as plt\nimport torch\n\ndef show_images(dataset, num_images=6):\n\n random_indices = torch.randperm(len(dataset))[:num_images]\n\n rows = 1\n cols = num_images\n fig, axes = plt.subplots(rows, cols, figsize=(15, 3))\n\n for i, idx in enumerate(random_indices):\n\n image, label = dataset[idx]\n\n image_np = image.permute(1, 2, 0).numpy()\n\n axes[i].imshow(image_np)\n axes[i].set_title(f\"Label: {label}\")\n\n axes[i].axis(\"off\")\n\n plt.show()\n\ntransformed = dataset\nshow_images(transformed)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 11,
+      "code": "from torch.utils.data import random_split\n\nclass_mapping = transformed.class_to_idx\nnum_classes = len(class_mapping)\n\ntrain_size = 420\nval_size = 150\ntest_size = 100\n\ntrain_indices, val_indices, test_indices = random_split(\n range(len(transformed)),\n [train_size, val_size, test_size]\n)\n\ntrain_ds = torch.utils.data.Subset(transformed, train_indices)\nval_ds = torch.utils.data.Subset(transformed, val_indices)\ntest_ds = torch.utils.data.Subset(transformed, test_indices)\n\nprint(len(train_ds), len(val_ds), len(test_ds))"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 13,
+      "code": "from torch.utils.data import DataLoader\n\nbatch_size = 25\n\ntrain_dl = DataLoader(train_ds, batch_size, shuffle = True, num_workers = 0, pin_memory = False)\nval_dl = DataLoader(val_ds, batch_size*2, num_workers = 0, pin_memory = False)"
+    },
+    {
+      "execution_count": 22,
+      "code_cell_id": 17,
+      "code": "import torch.nn as nn\ndef accuracy(outputs, labels):\n _, preds = torch.max(outputs, dim=1)\n return torch.tensor(torch.sum(preds == labels).item() / len(preds))\n\nclass ImageClassificationBase(nn.Module):\n def training_step(self, batch):\n images, labels = batch\n out = self(images)\n loss = F.cross_entropy(out, labels)\n return loss\n\n def validation_step(self, batch):\n images, labels = batch\n out = self(images)\n loss = F.cross_entropy(out, labels)\n acc = accuracy(out, labels)\n return {'val_loss': loss.detach(), 'val_acc': acc}\n\n def validation_epoch_end(self, outputs):\n batch_losses = [x['val_loss'] for x in outputs]\n epoch_loss = torch.stack(batch_losses).mean()\n batch_accs = [x['val_acc'] for x in outputs]\n epoch_acc = torch.stack(batch_accs).mean()\n return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}\n\n def epoch_end(self, epoch, result):\n print(\"Epoch {}: train_loss: {:.4f}, val_loss: {:.4f}, val_acc: {:.4f}\".format(\n epoch+1, result['train_loss'], result['val_loss'], result['val_acc']))"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 18,
+      "code": "import torchvision.models as models\nclass ResNet(ImageClassificationBase):\n def __init__(self):\n super().__init__()\n\n self.network = models.resnet18(pretrained=True)\n\n num_ftrs = self.network.fc.in_features\n self.network.fc = nn.Linear(num_ftrs, len(transformed.classes))\n\n def forward(self, xb):\n return torch.sigmoid(self.network(xb))\n\nmodel = ResNet()"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 21,
+      "code": "@torch.no_grad()\ndef evaluate(model, val_loader):\n model.eval()\n outputs = [model.validation_step(batch) for batch in val_loader]\n return model.validation_epoch_end(outputs)\n\ndef fit(epochs, lr, model, train_loader, val_loader, opt_func=torch.optim.SGD):\n history = []\n optimizer = opt_func(model.parameters(), lr)\n for epoch in range(epochs):\n\n model.train()\n train_losses = []\n for batch in train_loader:\n loss = model.training_step(batch)\n train_losses.append(loss)\n loss.backward()\n optimizer.step()\n optimizer.zero_grad()\n\n result = evaluate(model, val_loader)\n result['train_loss'] = torch.stack(train_losses).mean().item()\n model.epoch_end(epoch, result)\n history.append(result)\n return history"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 22,
+      "code": "resnet_model = models.resnet18(pretrained=True)\n\nnum_classes = 67\n\nresnet_model.fc = nn.Linear(resnet_model.fc.in_features, num_classes)\n\nprint(resnet_model)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 23,
+    "code": "import torch\nimport torch.nn as nn\nimport torch.optim as optim\nimport torch.nn.functional as F\nfrom torch.utils.data import DataLoader\n\nresnet_model = models.resnet18(pretrained=True)\n\ncriterion = nn.CrossEntropyLoss()\noptimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)\n\nnum_epochs = 1\n\nfor epoch in range(num_epochs):\n model.train()\n for inputs, labels in train_dl:\n optimizer.zero_grad()\n outputs = model(inputs)\n loss = criterion(outputs, labels)\n loss.backward()\n optimizer.step()\n\n model.eval()\n with torch.no_grad():\n correct = 0\n total = 0\n for inputs, labels in val_dl:\n outputs = model(inputs)\n _, predicted = torch.max(outputs.data, 1)\n total += labels.size(0)\n correct += (predicted == labels).sum().item()\n\n accuracy = correct / total\n print(f'Epoch {epoch + 1}/{num_epochs}, Validation Accuracy: {accuracy:.4f}')\n\ndef evaluate(model, test_dl):\n model.eval()\n with torch.no_grad():\n correct = 0\n total = 0\n for inputs, labels in test_dl:\n\n outputs = model(inputs)\n\n _, predicted = torch.max(outputs.data, 1)\n total += labels.size(0)\n correct += (predicted == labels).sum().item()\n\n accuracy = correct / total\n print(f'Test Accuracy: {accuracy:.4f}')\n\nevaluate(resnet_model,val_dl)"
+  }
+}

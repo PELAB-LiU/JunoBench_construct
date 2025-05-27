@@ -1,0 +1,88 @@
+{
+  "executed": [
+    {
+      "execution_count": 11,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport tensorflow as tf\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras import layers\nfrom matplotlib import pyplot as plt"
+    },
+    {
+      "execution_count": 1,
+      "code_cell_id": 2,
+      "code": "import pathlib\ndata_dir = 'data/web_scraped'\ndata_dir = pathlib.Path(data_dir).with_suffix('')"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "import os\nimport imghdr\n\nfor class_dir in os.listdir(data_dir):\n class_path = os.path.join(data_dir, class_dir)\n if not os.path.isdir(class_path):\n continue\n\n for filename in os.listdir(class_path):\n file_path = os.path.join(class_path, filename)\n if imghdr.what(file_path) not in [\"jpeg\", \"png\", \"bmp\", \"gif\"]:\n print(f\"❌ Unsupported format: {file_path} (Detected: {imghdr.what(file_path)})\")"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "import pathlib\ndata_dir = 'data/web_scraped_small_fixed'\ndata_dir = pathlib.Path(data_dir).with_suffix('')"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "image_count = len(list(data_dir.glob('*/*.jpg')))\nimage_count"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "import PIL\nheart = list(data_dir.glob('heart/*'))\nPIL.Image.open(str(heart[1]))"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "import PIL\nprincess = list(data_dir.glob('princess/*'))\nPIL.Image.open(str(princess[1]))"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "image_height, image_width = PIL.Image.open(str(princess[1])).size\nbatch_size,epochs = 64,10"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 9,
+      "code": "train_ds = tf.keras.utils.image_dataset_from_directory(\n data_dir,\n validation_split=0.2,\n subset='training',\n image_size=(image_height, image_width),\n seed = 123,\n shuffle=True,\n batch_size=batch_size\n)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 10,
+      "code": "val_ds = tf.keras.utils.image_dataset_from_directory(\n data_dir,\n validation_split=0.2,\n subset='validation',\n image_size=(image_height, image_width),\n seed = 123,\n shuffle=True,\n batch_size=batch_size\n)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 11,
+      "code": "normalization_layer = layers.Rescaling(1./255)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 12,
+      "code": "normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))\nimage_batch, labels_batch = next(iter(normalized_ds))\nfirst_image = image_batch[0]\n\nprint(np.min(first_image), np.max(first_image))"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 13,
+      "code": "from tensorflow import keras\ndata_augmentation = keras.Sequential(\n [\n layers.RandomFlip(\"horizontal\",\n input_shape=(image_height,\n image_width,\n 3)),\n layers.RandomRotation(0.1),\n layers.RandomZoom(0.1),\n ]\n)"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 14,
+      "code": "plt.figure(figsize=(10, 10))\nfor images, _ in train_ds.take(1):\n for i in range(9):\n augmented_images = data_augmentation(images)\n ax = plt.subplot(3, 3, i + 1)\n plt.imshow(augmented_images[0].numpy().astype(\"uint8\"))\n plt.axis(\"off\")"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 15,
+      "code": "num_of_classes = len(train_ds.class_names)\nnum_of_classes"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 16,
+      "code": "model = Sequential([\n data_augmentation,\n normalization_layer,\n layers.Conv2D(16, 3, padding='same', activation='relu'),\n layers.MaxPooling2D(),\n layers.Conv2D(32, 3, padding='same', activation='relu'),\n layers.MaxPooling2D(),\n layers.Conv2D(64, 3, padding='same', activation='relu'),\n layers.MaxPooling2D(),\n layers.Dropout(0.2),\n layers.Flatten(),\n layers.Dense(128, activation='relu'),\n layers.Dense(num_of_classes, name=\"outputs\")\n])"
+    }
+  ],
+  "target": {
+    "code_cell_id": 17,
+    "code": "model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])"
+  }
+}

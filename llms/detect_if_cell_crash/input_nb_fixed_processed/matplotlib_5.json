@@ -1,0 +1,38 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nfrom sklearn.cluster import KMeans\nimport matplotlib.pyplot as plt"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "file_path = 'data/diabetes.csv'\ndata = pd.read_csv(file_path)\nX = data[['Glucose','BloodPressure','Insulin']].values"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "K = 3"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "kmeans = KMeans(n_clusters = K)\nkmeans.fit(X)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "labels = kmeans.labels_"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "centriods = kmeans.cluster_centers_"
+    }
+  ],
+  "target": {
+    "code_cell_id": 6,
+    "code": "plt.scatter(X[:,0], X[:,1], X[:,2], c = labels, cmap = 'viridis')\n\nplt.scatter(centriods[:,0], centriods[:,1], marker = 'X', s = 200, c = 'red')\n\nplt.title(\"K-Means Clustering\")\nplt.xlabel(\"Gluscose\")\nplt.ylabel(\"BloodPressure\")\n\nplt.show()"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "executed": [],
+  "target": {
+    "code_cell_id": 7,
+    "code": "X_test_tensor = torch.tensor(X_test, dtype=torch.float32)\npredictions = model(X_test_tensor)\n_, predicted_labels = torch.max(predictions, 1)"
+  }
+}

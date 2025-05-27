@@ -1,0 +1,173 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 2,
+      "code": "import numpy as np\nimport pandas as pd\nfrom mpl_toolkits.mplot3d import Axes3D\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport os\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nimport torch\nfrom torch.utils.data import Dataset, DataLoader\nimport clip\nfrom PIL import Image\nfrom collections import Counter\nfrom sklearn import preprocessing\nfrom sklearn.preprocessing import OneHotEncoder\n\nimport os\nseed=42"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 3,
+      "code": "from pathlib import Path\n\nIMAGES_TRAIN_PATH = \"data_small/train/train/\"\nIMAGES_VAL_PATH = \"data_small/val/val/\"\nANNOTATIONS_TRAIN_PATH = \"data_small/Annotations/Annotations/train.json\"\nANNOTATIONS_VAL_PATH = \"data_small/Annotations/Annotations/val.json\""
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 4,
+      "code": "df = pd.read_json(ANNOTATIONS_TRAIN_PATH,orient='records')\ndf['image'][0]"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 5,
+      "code": "df = df[df['image'].isin(set(os.listdir(IMAGES_TRAIN_PATH)))]"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 6,
+      "code": "print(df.shape)\ndf.hist()\nplt.show"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 7,
+      "code": "df['answer_type'].hist()\nplt.show()"
+    },
+    {
+      "execution_count": 22,
+      "code_cell_id": 8,
+      "code": "print(df[df.answerable == 0].shape[0])\nprint(df[df.answer_type == 'unanswerable'].shape[0])"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 9,
+      "code": ""
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 10,
+      "code": "def most_common(lst):\n data = Counter(lst)\n return max(lst, key=data.get)\n\ndf[\"max_answer\"] = df[\"answers\"].apply(lambda row:most_common([ans[\"answer\"] for ans in row]))\ndf[\"max_answer_confidence\"] = df[\"answers\"].apply(lambda row:most_common([ans[\"answer_confidence\"] for ans in row]))\ndf[\"answer_list\"] = df[\"answers\"].apply(lambda row:[ans[\"answer\"] for ans in row])\ndf"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 11,
+      "code": "X_train, X_test, y_train, y_test = train_test_split(df, df['max_answer'], test_size=0.05 ,random_state=42,stratify=df['answer_type'])\nX_train['max_answer']"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 12,
+      "code": "t=pd.DataFrame.from_dict(X_train)\ncols=t.columns\nt=t.to_numpy()\nt=pd.DataFrame(t,columns=cols)\nt"
+    },
+    {
+      "execution_count": 28,
+      "code_cell_id": 13,
+      "code": "df2 = pd.read_json(ANNOTATIONS_VAL_PATH,orient='records')\ndf2 = df2[df2['image'].isin(set(os.listdir(IMAGES_VAL_PATH)))]\ndef most_common(lst):\n data = Counter(lst)\n return max(lst, key=data.get)\n\ndf2[\"max_answer\"] = df2[\"answers\"].apply(lambda row:most_common([ans[\"answer\"] for ans in row]))\ndf2[\"max_answer_confidence\"] = df2[\"answers\"].apply(lambda row:most_common([ans[\"answer_confidence\"] for ans in row]))\ndf2[\"answer_list\"] = df2[\"answers\"].apply(lambda row:[ans[\"answer\"] for ans in row])\n\nvocab2=df2[\"max_answer\"].to_numpy()\nvocab_type2=df2[\"answer_type\"].to_numpy()\nvocab2.shape"
+    },
+    {
+      "execution_count": 29,
+      "code_cell_id": 14,
+      "code": "vocab=X_train[\"max_answer\"].to_numpy()\nvocab_type=X_train[\"answer_type\"].to_numpy()\nvocab=np.append(vocab, vocab_type)\nvocab=np.append(vocab, vocab2)\nvocab=np.append(vocab, vocab_type2)\nvocab=np.unique(vocab)\nvocab.shape"
+    },
+    {
+      "execution_count": 30,
+      "code_cell_id": 15,
+      "code": "oh=OneHotEncoder(sparse_output=False)\nvocab=vocab.reshape(vocab.shape[0],1)\nVlabels=oh.fit_transform(vocab)\nVlabels[2]"
+    },
+    {
+      "execution_count": 31,
+      "code_cell_id": 16,
+      "code": "alllabels=X_train[\"max_answer\"].to_numpy()\nans_type=X_train[\"answer_type\"].to_numpy()\nans_type = ans_type.reshape(ans_type.shape[0],1)\nans_type = oh.transform(ans_type)\n\nalllabels=alllabels.reshape(alllabels.shape[0],1)\nalllabels=oh.transform(alllabels)\n\ntalllabels=torch.tensor(alllabels)\ntalllabels=talllabels.to(torch.float32)\ntalllabels.dtype"
+    },
+    {
+      "execution_count": 32,
+      "code_cell_id": 17,
+      "code": "device = \"cuda\" if torch.cuda.is_available() else \"cpu\"\nmo, preprocess = clip.load(\"ViT-L/14\", device=device)\n\nX_train=pd.DataFrame.from_dict(X_train)\ncols=t.columns\nX_train=X_train.to_numpy()\nX_train=pd.DataFrame(X_train,columns=cols)\nprint(X_train.shape)\npath=\"data_small/train/train/\"\nimage_pro_stack = torch.empty((1,3,224,224)).to(device)\nimage_array =[]\nimg_vectors=[]\nimageS=[]\nall_features=torch.empty((1,1536)).to(device)\nfor i in range(X_train[\"image\"].shape[0]):\n image_array.append((path+X_train['image'][i]))\nimage_array = np.array(image_array)\nall_tensors=[]\nbatch=20\nfor i in range(0,image_array.shape[0],batch):\n if (i+batch)<image_array.shape[0]:\n img_dirs=image_array[i:i+batch]\n for img in img_dirs:\n image = preprocess(Image.open(img)).unsqueeze(0).to(device)\n image_pro_stack=torch.cat((image_pro_stack,image)).to(device)\n temp=range(i,i+batch)\n text = clip.tokenize(df.loc[temp,\"question\"]).to(device)\n elif ((i+batch)>= image_array.shape[0]) and (i < image_array.shape[0]):\n img_dirs=image_array[i:image_array.shape[0]]\n for img in img_dirs:\n image = preprocess(Image.open(img)).unsqueeze(0).to(device)\n image_pro_stack=torch.cat((image_pro_stack,image)).to(device)\n temp=range(i,image_array.shape[0])\n text = clip.tokenize(df.loc[temp,\"question\"]).to(device)\n\n with torch.no_grad():\n text_features = mo.encode_text(text).to(device)\n image_pro_stack = image_pro_stack[1:image_pro_stack.shape[0]].to(device)\n img_features=mo.encode_image(image_pro_stack).to(device)\n\n feature_vector=torch.cat((img_features,text_features),dim=1).to(device)\n all_features=torch.cat((all_features,feature_vector)).to(device)\n\n image_pro_stack = torch.empty((1,3,224,224)).to(device)\n\nall_features = all_features[1:all_features.shape[0]].to(device)\nprint(\"done\")"
+    },
+    {
+      "execution_count": 33,
+      "code_cell_id": 18,
+      "code": "all_features=all_features.cpu()\nptrain = pd.DataFrame(all_features.numpy())\nptrain['label'] = X_train['max_answer']\nptrain['label_type'] = X_train['answer_type']\nptrain.to_csv('data_small/train.csv')"
+    },
+    {
+      "execution_count": 35,
+      "code_cell_id": 19,
+      "code": "alllabels_t=X_test[\"max_answer\"]\nencoded_labels=[]\nfor ans in (alllabels_t):\n try:\n encoded_labels.append(oh.transform(ans))\n except ValueError as e:\n encoded_labels.append(-1)\nalllabels_t=np.array(encoded_labels)\nprint(alllabels_t.shape)\ntalllabels_t=torch.tensor(alllabels_t)\ntalllabels_t=talllabels_t.to(torch.float32)\ntalllabels_t.dtype"
+    },
+    {
+      "execution_count": 36,
+      "code_cell_id": 20,
+      "code": "device = \"cuda\" if torch.cuda.is_available() else \"cpu\"\nmo, preprocess = clip.load(\"ViT-L/14\", device=device)\n\nX_test=pd.DataFrame.from_dict(X_test)\ncols=X_test.columns\nX_test=X_test.to_numpy()\nX_test=pd.DataFrame(X_test,columns=cols)\nprint(X_test.shape)\npath=\"data_small/train/train/\"\nimage_pro_stack = torch.empty((1,3,224,224)).to(device)\nimage_array =[]\nimg_vectors=[]\nimageS=[]\nall_features=torch.empty((1,1536)).to(device)\nfor i in range(X_test[\"image\"].shape[0]):\n image_array.append((path+X_test['image'][i]))\nimage_array = np.array(image_array)\nall_tensors=[]\nbatch=20\nfor i in range(0,image_array.shape[0],batch):\n if (i+batch)<image_array.shape[0]:\n img_dirs=image_array[i:i+batch]\n for img in img_dirs:\n image = preprocess(Image.open(img)).unsqueeze(0).to(device)\n image_pro_stack=torch.cat((image_pro_stack,image)).to(device)\n temp=range(i,i+batch)\n text = clip.tokenize(df.loc[temp,\"question\"]).to(device)\n elif ((i+batch)>= image_array.shape[0]) and (i < image_array.shape[0]):\n img_dirs=image_array[i:image_array.shape[0]]\n for img in img_dirs:\n image = preprocess(Image.open(img)).unsqueeze(0).to(device)\n image_pro_stack=torch.cat((image_pro_stack,image)).to(device)\n temp=range(i,image_array.shape[0])\n text = clip.tokenize(df.loc[temp,\"question\"]).to(device)\n\n with torch.no_grad():\n text_features = mo.encode_text(text).to(device)\n image_pro_stack = image_pro_stack[1:image_pro_stack.shape[0]].to(device)\n img_features=mo.encode_image(image_pro_stack).to(device)\n\n feature_vector=torch.cat((img_features,text_features),dim=1).to(device)\n all_features=torch.cat((all_features,feature_vector)).to(device)\n print(feature_vector.shape)\n image_pro_stack = torch.empty((1,3,224,224)).to(device)\n\nall_features = all_features[1:all_features.shape[0]].to(device)\nprint(all_features.shape)\nprint(\"Done\")"
+    },
+    {
+      "execution_count": 37,
+      "code_cell_id": 21,
+      "code": "all_features=all_features.cpu()\nptest = pd.DataFrame(all_features.numpy())\nptest['label'] = X_test['max_answer']\nptest.to_csv('data_small/test.csv')"
+    },
+    {
+      "execution_count": 38,
+      "code_cell_id": 22,
+      "code": "df = pd.read_json(ANNOTATIONS_VAL_PATH,orient='records')\ndf['image'][0]"
+    },
+    {
+      "execution_count": 39,
+      "code_cell_id": 23,
+      "code": "df = df[df['image'].isin(set(os.listdir(IMAGES_VAL_PATH)))]"
+    },
+    {
+      "execution_count": 40,
+      "code_cell_id": 24,
+      "code": "def most_common(lst):\n data = Counter(lst)\n return max(lst, key=data.get)\n\ndf[\"max_answer\"] = df[\"answers\"].apply(lambda row:most_common([ans[\"answer\"] for ans in row]))\ndf[\"max_answer_confidence\"] = df[\"answers\"].apply(lambda row:most_common([ans[\"answer_confidence\"] for ans in row]))\ndf[\"answer_list\"] = df[\"answers\"].apply(lambda row:[ans[\"answer\"] for ans in row])\ndf"
+    },
+    {
+      "execution_count": 41,
+      "code_cell_id": 25,
+      "code": "alllabels_val=df[\"max_answer\"]\nencoded_labels=[]\nfor ans in (alllabels_val):\n try:\n encoded_labels.append(oh.transform(ans))\n except ValueError as e:\n encoded_labels.append(-1)\nalllabels_val=np.array(encoded_labels)\nprint(alllabels_val.shape)\ntalllabels_val=torch.tensor(alllabels_val)\ntalllabels_val=talllabels_val.to(torch.float32)\ntalllabels_val.dtype"
+    },
+    {
+      "execution_count": 42,
+      "code_cell_id": 26,
+      "code": "device = \"cuda\" if torch.cuda.is_available() else \"cpu\"\nmo, preprocess = clip.load(\"ViT-L/14\", device=device)\n\ncols=df.columns\n\nprint(df.shape)\npath=\"data_small/val/val/\"\nimage_pro_stack = torch.empty((1,3,224,224)).to(device)\nimage_array =[]\nimg_vectors=[]\nimageS=[]\nall_features=torch.empty((1,1536)).to(device)\nfor i in range(df[\"image\"].shape[0]):\n image_array.append((path+df['image'][i]))\nimage_array = np.array(image_array)\nall_tensors=[]\nbatch=20\nfor i in range(0,image_array.shape[0],batch):\n if (i+batch)<image_array.shape[0]:\n img_dirs=image_array[i:i+batch]\n for img in img_dirs:\n image = preprocess(Image.open(img)).unsqueeze(0).to(device)\n image_pro_stack=torch.cat((image_pro_stack,image)).to(device)\n temp=range(i,i+batch)\n text = clip.tokenize(df.loc[temp,\"question\"]).to(device)\n elif ((i+batch)>= image_array.shape[0]) and (i < image_array.shape[0]):\n img_dirs=image_array[i:image_array.shape[0]]\n for img in img_dirs:\n image = preprocess(Image.open(img)).unsqueeze(0).to(device)\n image_pro_stack=torch.cat((image_pro_stack,image)).to(device)\n temp=range(i,image_array.shape[0])\n text = clip.tokenize(df.loc[temp,\"question\"]).to(device)\n\n with torch.no_grad():\n text_features = mo.encode_text(text).to(device)\n image_pro_stack = image_pro_stack[1:image_pro_stack.shape[0]].to(device)\n img_features=mo.encode_image(image_pro_stack).to(device)\n\n feature_vector=torch.cat((img_features,text_features),dim=1).to(device)\n all_features=torch.cat((all_features,feature_vector)).to(device)\n print(feature_vector.shape)\n image_pro_stack = torch.empty((1,3,224,224)).to(device)\n\nall_features = all_features[1:all_features.shape[0]].to(device)\nprint(all_features.shape)\nprint(\"Done\")"
+    },
+    {
+      "execution_count": 43,
+      "code_cell_id": 27,
+      "code": "all_features=all_features.cpu()\npval = pd.DataFrame(all_features.numpy())\npval['label'] = df['max_answer']\npval.to_csv('data_small/val.csv')"
+    },
+    {
+      "execution_count": 51,
+      "code_cell_id": 28,
+      "code": "train_df=pd.read_csv(\"data_small/train.csv\",index_col=0)\n\ntrain_labels=train_df['label'].to_numpy()\ntrain_labels=train_labels.reshape(train_labels.shape[0],1)\n\ntrain_df=train_df.drop(columns=['label', 'label_type'])\ntest_df=pd.read_csv(\"data_small/test.csv\",index_col=0)\n\ntest_labels=test_df['label'].to_numpy()\ntest_labels=test_labels.reshape(test_labels.shape[0],1)\n\ntest_df=test_df.drop(columns=('label'))\nval_df = pd.read_csv(\"data_small/val.csv\",index_col=0)\n\nval_labels=val_df['label'].to_numpy()\nval_labels=val_labels.reshape(val_labels.shape[0],1)\n\nval_df = val_df.drop(columns=('label'))\nvocab=np.append(train_labels,val_labels)\n\nvocab=np.unique(vocab)\nvocab=vocab.reshape(vocab.shape[0],1)\nprint(vocab.shape)\noh = OneHotEncoder(sparse_output=False)\nhot_vocab=oh.fit_transform(vocab)\ntrain_df.shape,val_df.shape,test_df.shape\ntrain_df"
+    },
+    {
+      "execution_count": 52,
+      "code_cell_id": 29,
+      "code": "train_arr=train_df.to_numpy()\ntrain_arr=torch.from_numpy(train_arr)\ntest_arr=test_df.to_numpy()\ntest_arr=torch.from_numpy(test_arr)\nval_arr=val_df.to_numpy()\nval_arr=torch.from_numpy(val_arr)\n\ntrain_labels=oh.transform(train_labels)\nval_labels =oh.transform(val_labels)\ntest_enc_labels=[]\nfor i in range(test_labels.shape[0]):\n try:\n test_enc_labels.append(oh.transform(test_labels[i]))\n except ValueError as e:\n z=np.zeros((1,6294))\n test_enc_labels.append(z)\ntest_labels=np.array(test_enc_labels)\ntest_labels=np.squeeze(test_labels)\ntest_labels.shape\n\ntrain_labels=torch.tensor(train_labels)\ntrain_labels=train_labels.to(torch.float32)\nval_labels=torch.tensor(val_labels)\nval_labels=val_labels.to(torch.float32)\ntest_labels=torch.tensor(test_labels)\ntest_labels=test_labels.to(torch.float32)"
+    },
+    {
+      "execution_count": 53,
+      "code_cell_id": 32,
+      "code": "class myDataset(Dataset):\n def __init__(self, array,labels):\n self.array = array.to(device)\n self.label = labels.to(device)\n\n def __getitem__(self, index):\n\n data=self.array[index]\n data=data.to(torch.float32)\n label=self.label[index].type(torch.float32)\n label=self.label[index].to(device)\n\n return data, label\n\n def __len__(self):\n return len(self.array)"
+    },
+    {
+      "execution_count": 54,
+      "code_cell_id": 33,
+      "code": "device = \"cuda\" if torch.cuda.is_available() else \"cpu\""
+    },
+    {
+      "execution_count": 55,
+      "code_cell_id": 34,
+      "code": "customDataset=myDataset(train_arr,train_labels)\ntrain_dataloader = DataLoader(customDataset, batch_size=64,shuffle=True, num_workers=0)"
+    },
+    {
+      "execution_count": 84,
+      "code_cell_id": 35,
+      "code": "class AnswerModel(torch.nn.Module):\n\n def __init__(self):\n super(AnswerModel, self).__init__()\n\n self.norm0 = torch.nn.LayerNorm(1536).to(device)\n self.dropout0 = torch.nn.Dropout(0.5).to(device)\n self.linear1 = torch.nn.Linear(1536, 512).to(device)\n\n self.norm1 = torch.nn.LayerNorm(512).to(device)\n self.dropout1 = torch.nn.Dropout(0.5).to(device)\n\n self.activation = torch.nn.ReLU().to(device)\n\n self.linear2 = torch.nn.Linear(512 , 6294).to(device)\n\n self.aux = torch.nn.Linear(512,4).to(device)\n self.dropout1 = torch.nn.Dropout(0.5).to(device)\n self.gate = torch.nn.Linear(4, 6294).to(device)\n self.sigmoid=torch.nn.Sigmoid().to(device)\n\n def forward(self, x):\n x = self.norm0(x).to(device)\n x = self.dropout0(x).to(device)\n\n x= self.linear1(x).to(device)\n x = self.dropout1(x).to(device)\n\n xaux =self.aux(x).to(device)\n xaux =self.gate(xaux).to(device)\n vqa = self.linear2(x).to(device)\n out = vqa * self.sigmoid(xaux)\n return out,xaux\nmodel= AnswerModel().to(device)\nprint(model)"
+    },
+    {
+      "execution_count": 87,
+      "code_cell_id": 36,
+      "code": "def run_model(model,dataloader, optimizer,train = True ):\n if train:\n model.train()\n\n pred = []\n True_labels = []\n loss = torch.nn.CrossEntropyLoss()\n\n total_loss = 0\n for (data, label) in dataloader:\n\n data=data.to(device)\n label=label.to(device)\n\n optimizer.zero_grad()\n output,out_aux = model(data)\n output=output.type(torch.FloatTensor).to(device)\n out_aux=out_aux.type(torch.FloatTensor).to(device)\n\n loss_ = loss(output, label).to(device)\n loss_aux=loss(out_aux,label).to(device)\n mod_loss = loss_+loss_aux\n mod_loss.backward()\n total_loss+=mod_loss.item()\n\n optimizer.step()\n pred.append(output)\n True_labels.append(label)\n\n return pred ,True_labels, total_loss/len(dataloader)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 37,
+    "code": "epoch = 2\n\noptimizer = torch.optim.Adam(model.parameters(), 0.001, weight_decay=.01)\nscheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=.1, threshold=1e-6)\n\nfor e in range(epoch):\n pred,labels,loss = run_model(model,train_dataloader,optimizer)\n\n correct=0\n for i in range(len(pred)):\n predictions = pred[i].to(device)\n t_label = labels[i].to(device)\n position = torch.argmax(predictions).to(device)\n pos_label= torch.argmax(t_label).to(device)\n\n if (position == pos_label ):\n correct+=1\n scheduler.step(loss)\n print(\"epoch : \",e)\n print(\"training accuracy is \",correct/len(pred)*1.0)\n\n print(loss)"
+  }
+}

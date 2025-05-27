@@ -1,0 +1,33 @@
+{
+  "executed": [
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "import numpy as np\nimport pandas as pd\n\nimport os\nfor dirname, _, filenames in os.walk('data'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "class DataLoader:\n\n def __init__(self):\n self.train = pd.read_csv(\"data/playground-series-s3e24/train.csv.zip\",index_col = 'id')\n self.test = pd.read_csv( \"data/playground-series-s3e24/test.csv.zip\",index_col = 'id')\n self.original = pd.read_csv(\"data/smoker-status-prediction-using-biosignals/train_dataset.csv.zip\")\n\n def _classifydataset(self)->None:\n self.train[\"Source\"] = 1\n self.test[\"Source\"] = 1\n self.original[\"Source\"] = 0\n \"\"\"\n As we can see from the description all\n values should be numeric in nature but cols\n 'uniq_Op','uniq_Opnd','total_Op','total_Opnd','branchCount' are object type\n we will replace all non numeric values with np.nan\n \"\"\"\n\n def join(self)-> pd.DataFrame:\n self.df = pd.concat([self.train,self.original],axis = 0,ignore_index = True)\n self.df = self.df.drop_duplicates()\n self.df.index = np.arange(len(self.df))\n self.df.index.name = 'id'\n return self.df\n\n def variables(self):\n self.numvars = [i for i in pp.train.columns if pp.train[i].nunique() > 10]\n self.catvars = list(set(self.train.columns) - set(self.numvars))\n return (self.numvars, self.catvars)\n\n def execute(self):\n self. _classifydataset()\n\n self.join()\n return self\n\n def information(self,type):\n if type == 'train':\n return summary(self.train)\n elif type == 'test':\n return summary(self.test)\n elif type == 'original':\n return summary(self.df)\n else:\n return -1\n\ndef summary(df: pd.DataFrame)-> pd.DataFrame:\n summary = pd.DataFrame(df.dtypes,columns=['dtype'])\n summary[\"#Missing\"] = df.isna().sum().values\n summary[\"%Missing\"] = summary[\"#Missing\"]/len(df) * 100\n summary[\"nuniques\"] = df.nunique().values\n summary[\"type\"] = df.dtypes\n return summary"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "pp = DataLoader()\npp.execute()\npp.train.head()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "num,cat = pp.variables()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "cat.remove('Source')\ncat.remove('smoking')"
+    }
+  ],
+  "target": {
+    "code_cell_id": 7,
+    "code": "fig, axs = plt.subplots(6, 3, figsize=(7, 17))\nfor col,ax in zip(numvars,axs.ravel()):\n if pp.train[col].dtype == float or pp.train[col].dtype == int:\n sns.histplot(ax = ax, data = pp.train[col],bins=100)\n plt.xlabel(col)\n ax.set_xticklabels(ax.get_xticklabels(),fontsize=0.1)\n ax.set(xlim = (0,None),ylim = (0,None))\n else:\n vc = pp.train[col].value_counts()\n ax.bar(vc.index,vc.values)\n plt.xlabel(col)\nfig.suptitle('Feature distributions', y=1.02, fontsize=20)\nplt.tight_layout()"
+  }
+}

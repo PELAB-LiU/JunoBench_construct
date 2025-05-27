@@ -1,0 +1,93 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n%matplotlib inline\nimport seaborn as sns\nimport sklearn\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import accuracy_score"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/iris-data.csv')"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 5,
+      "code": "df = df.dropna(subset=['petal_width_cm'])\ndf.info()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 9,
+      "code": "df['class'].replace([\"Iris-setossa\",\"versicolor\"], [\"Iris-setosa\",\"Iris-versicolor\"], inplace=True)\ndf['class'].value_counts()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 10,
+      "code": "final_df = df[df['class'] != 'Iris-virginica']"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 14,
+      "code": "final_df.loc[final_df.sepal_length_cm < 1, ['sepal_length_cm']] = final_df['sepal_length_cm']*100\nfinal_df.hist(column = 'sepal_length_cm',bins=20, figsize=(10,5))"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 15,
+      "code": "final_df = final_df.drop(final_df[(final_df['class'] == \"Iris-setosa\") & (final_df['sepal_width_cm'] < 2.5)].index)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 17,
+      "code": "final_df['class'].replace([\"Iris-setosa\",\"Iris-versicolor\"], [1,0], inplace=True)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 19,
+      "code": "inp_df = final_df.drop(final_df.columns[[4]], axis=1)\nout_df = final_df.drop(final_df.columns[[0,1,2,3]], axis=1)\n\nscaler = StandardScaler()\ninp_df = scaler.fit_transform(inp_df)\n\nX_train, X_test, y_train, y_test = train_test_split(inp_df, out_df, test_size=0.2, random_state=42)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 20,
+      "code": "X_tr_arr = X_train\nX_ts_arr = X_test\ny_tr_arr= y_train.values\ny_ts_arr = y_test.values"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 21,
+      "code": "print('Input Shape', (X_tr_arr.shape))\nprint('Output Shape', X_test.shape)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 22,
+      "code": "def weightInitialization(n_features):\n w = np.zeros((1,n_features))\n b = 0\n return w,b"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 23,
+      "code": "def sigmoid_activation(result):\n final_result = 1/(1+np.exp(-result))\n return final_result"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 24,
+      "code": "def model_optimize(w, b, X, Y):\n m = X.shape[0]\n\n final_result = sigmoid_activation(np.dot(w,X.T)+b)\n Y_T = Y.T\n cost = (-1/m)*(np.sum((Y_T*np.log(final_result)) + ((1-Y_T)*(np.log(1-final_result)))))\n\n dw = (1/m)*(np.dot(X.T, (final_result-Y.T).T))\n db = (1/m)*(np.sum(final_result-Y.T))\n\n grads = {\"dw\": dw, \"db\": db}\n\n return grads, cost"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 25,
+      "code": "def sigmoid(z):\n return 1 / (1 + np.exp(-z))\n\ndef initialize_params(dim):\n w = np.zeros((dim, 1))\n b = 0\n return w, b\n\ndef model_optimize(w, b, X, Y):\n m = X.shape[0]\n\n final_result = sigmoid(np.dot(X, w) + b)\n cost = (-1/m) * np.sum(Y * np.log(final_result) + (1 - Y) * np.log(1 - final_result))\n\n dw = (1/m) * np.dot(X.T, (final_result - Y))\n db = (1/m) * np.sum(final_result - Y)\n\n grads = {\"dw\": dw, \"db\": db}\n\n return grads, cost\n\ndef model_train(X, Y, num_iterations, learning_rate):\n costs = []\n w, b = initialize_params(X.shape[1])\n\n for i in range(num_iterations):\n grads, cost = model_optimize(w, b, X, Y)\n\n dw = grads[\"dw\"]\n db = grads[\"db\"]\n\n w = w - learning_rate * dw\n b = b - learning_rate * db\n\n if i % 100 == 0:\n costs.append(cost)\n print(\"Cost after iteration %i: %f\" % (i, cost))\n\n params = {\"w\": w, \"b\": b}\n grads = {\"dw\": dw, \"db\": db}\n\n return params, grads, costs"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 26,
+      "code": "def model_predict(w, b, X, Y, learning_rate, no_iterations):\n costs = []\n for i in range(no_iterations):\n\n grads, cost = model_optimize(w,b,X,Y)\n\n dw = grads[\"dw\"]\n db = grads[\"db\"]\n\n w = w - (learning_rate * (dw.T))\n b = b - (learning_rate * db)\n\n if (i % 100 == 0):\n costs.append(cost)\n\n coeff = {\"w\": w, \"b\": b}\n gradient = {\"dw\": dw, \"db\": db}\n\n return coeff, gradient, costs"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 27,
+      "code": "def predict(final_pred, m):\n y_pred = np.zeros((1,m))\n for i in range(final_pred.shape[1]):\n if final_pred[0][i] > 0.5:\n y_pred[0][i] = 1\n return y_pred"
+    }
+  ],
+  "target": {
+    "code_cell_id": 28,
+    "code": "n_features = X_tr_arr.shape[1]\nprint('Number of Features', n_features)\nw, b = weightInitialization(n_features)\n\ncoeff, gradient, costs = model_predict(w, b, X_tr_arr, y_tr_arr, learning_rate=0.0001,no_iterations=4500)\n\nw = coeff[\"w\"]\nb = coeff[\"b\"]\nprint('Optimized weights', w)\nprint('Optimized intercept',b)\n\nfinal_train_pred = sigmoid_activation(np.dot(w,X_tr_arr.T)+b)\nfinal_test_pred = sigmoid_activation(np.dot(w,X_ts_arr.T)+b)\n\nm_tr = X_tr_arr.shape[0]\nm_ts = X_ts_arr.shape[0]\n\ny_tr_pred = predict(final_train_pred, m_tr)\nprint('Training Accuracy',accuracy_score(y_tr_pred.T, y_tr_arr))\n\ny_ts_pred = predict(final_test_pred, m_ts)\nprint('Test Accuracy',accuracy_score(y_ts_pred.T, y_ts_arr))"
+  }
+}

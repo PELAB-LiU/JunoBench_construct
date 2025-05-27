@@ -1,0 +1,73 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import tensorflow as tf\nimport tensorflow_decision_forests as tfdf\nimport pandas as pd\nimport numpy as np\nimport seaborn as sns\nimport matplotlib.pyplot as plt"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "print(\"TensorFlow v\" + tf.__version__)\nprint(\"TensorFlow Decision Forests v\" + tfdf.__version__)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df = pd.read_csv('data/train.csv')\nprint(\"El tamaño del dataset: {}\".format(df.shape))"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df.head(5)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df.describe()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "for feature in df.columns:\n x = df[feature].isna().sum()\n print('Total de valores nulos de', feature, '=', x,'equivale al',\"{:,.2f}\".format((x / len(df)) * 100) + '% del total de la columna.')"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 20,
+      "code": "df = df.drop(['PassengerId', 'Name'], axis=1)\ndf.head(5)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 21,
+      "code": "df[['Age', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck','RoomService']] = df[['Age', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck','RoomService']].fillna(value=0)\ndf.isnull().sum().sort_values(ascending=False)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 22,
+      "code": "for column in ('HomePlanet', 'Cabin', 'Destination','CryoSleep','VIP','Transported'):\n print(\"Columna\",column,\"-\" , df[column].unique())"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 23,
+      "code": "from sklearn.preprocessing import LabelEncoder\n\nle = LabelEncoder()\n\ndf['HomePlanet'] = le.fit_transform(df['HomePlanet'])\ndf['Cabin'] = le.fit_transform(df['Cabin'])\ndf['Destination'] = le.fit_transform(df['Destination'])\ndf['CryoSleep'] = le.fit_transform(df['CryoSleep'])\ndf['VIP'] = le.fit_transform(df['VIP'])\ndf['Transported'] = le.fit_transform(df['Transported'])\n\nprint(df)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 24,
+      "code": "df.dtypes"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 25,
+      "code": "df[\"Age\"] = df[\"Age\"].astype(int)\ndf[\"RoomService\"] = df[\"RoomService\"].astype(int)\ndf[\"FoodCourt\"] = df[\"FoodCourt\"].astype(int)\ndf[\"ShoppingMall\"] = df[\"ShoppingMall\"].astype(int)\ndf[\"Spa\"] = df[\"Spa\"].astype(int)\ndf[\"VRDeck\"] = df[\"VRDeck\"].astype(int)\n\ndf.dtypes"
+    }
+  ],
+  "target": {
+    "code_cell_id": 37,
+    "code": "filas = 2\ncol = 5\n\nnombres_col = df[[\"Cabin\", \"RoomService\", \"FoodCourt\", \"ShoppingMall\", \"Spa\", \"VRDeck\"]]\ny = df[\"Age\"]\n\nN = 50\nfig, axs = plt.subplots(filas, col, figsize=(25, 10))\n\nfor i in range(filas):\n for j in range(col):\n n = i * col + j\n if n < len(nombres_col):\n axs[i, j].set_title(nombres_col.columns[n])\n axs[i, j].scatter(df[nombres_col.columns[n]][:N], y[:N])\n\nfig.tight_layout()\nplt.show()"
+  }
+}

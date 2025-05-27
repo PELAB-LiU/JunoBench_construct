@@ -1,0 +1,83 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import os\nimport tensorflow as tf\nfrom tensorflow.keras.applications.vgg19 import VGG19\nfrom tensorflow.keras.applications.mobilenet_v2 import MobileNetV2\nfrom tensorflow.keras.applications.vgg19 import preprocess_input as vgg19_preprocess_input\nfrom tensorflow.keras.applications.mobilenet_v2 import preprocess_input as mobilenetv2_preprocess_input\nfrom tensorflow.keras.layers import GlobalAveragePooling2D\nfrom tensorflow.keras.models import Sequential, Model\nfrom tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Average, concatenate\nfrom tensorflow.keras.preprocessing.image import ImageDataGenerator\nfrom keras.optimizers import Adam\nfrom keras.callbacks import EarlyStopping, ModelCheckpoint\n\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc\nfrom sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, matthews_corrcoef"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "np.random.seed(123)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "data_dir = 'data_small/CovidDataset_70_30'"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "batch_size = 32\ninput_shape = (224, 224, 3)\nnum_classes = 2"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "train_datagen = ImageDataGenerator(rescale=1./255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True)\ntest_datagen = ImageDataGenerator(rescale=1./255)\nvalidation_datagen = ImageDataGenerator(rescale=1./255)\n\ntrain_generator = train_datagen.flow_from_directory(\n os.path.join(data_dir, 'Train'),\n target_size=input_shape[:2],\n batch_size=batch_size,\n class_mode='categorical')\n\ntest_generator = test_datagen.flow_from_directory(\n os.path.join(data_dir, 'Test'),\n target_size=input_shape[:2],\n batch_size=batch_size,\n class_mode='categorical')\n\nvalidation_generator = validation_datagen.flow_from_directory(\n os.path.join(data_dir, 'Validation'),\n target_size=input_shape[:2],\n batch_size=batch_size,\n class_mode='categorical')"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "vgg19 = VGG19(weights='imagenet', include_top=False, input_shape=input_shape)\n\nmodelV19 = Sequential()\nmodelV19.add(vgg19)\nmodelV19.add(Flatten())\nmodelV19.add(Dense(500, activation='relu'))\nmodelV19.add(Dropout(0.5))\nmodelV19.add(Dense(300, activation='relu'))\nmodelV19.add(Dropout(0.5))\nmodelV19.add(Dense(num_classes, activation='softmax'))\n\nfor layer in vgg19.layers:\n layer.trainable = False"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "mobilenetv2 = MobileNetV2(weights='imagenet', include_top=False, input_shape=input_shape)\n\nmodelM2 = Sequential()\nmodelM2.add(mobilenetv2)\nmodelM2.add(Flatten())\nmodelM2.add(Dense(500, activation='relu'))\nmodelM2.add(Dropout(0.5))\nmodelM2.add(Dense(300, activation='relu'))\nmodelM2.add(Dropout(0.5))\nmodelM2.add(Dense(num_classes, activation='softmax'))\n\nfor layer in mobilenetv2.layers:\n layer.trainable = False"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "opt = Adam(learning_rate=0.0001, beta_1=0.9)\nopt2 = Adam(learning_rate=0.0001, beta_1=0.9)\nmodelV19.compile(\n loss='binary_crossentropy',\n optimizer=opt,\n metrics=['accuracy'])\n\nmodelM2.compile(\n loss='binary_crossentropy',\n optimizer=opt2,\n metrics=['accuracy'])\n\nearly_stop = EarlyStopping(monitor='val_loss', patience=10)\nfilepath_weights_V19 = \"data_small/best_weights_V19-{epoch:02d}-{val_accuracy:.4f}.keras\"\nfilepath_weights_M2 = \"data_small/best_weights_M2-{epoch:02d}-{val_accuracy:.4f}.keras\"\ncheckpoint_V19 = ModelCheckpoint(filepath_weights_V19, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)\ncheckpoint_M2 = ModelCheckpoint(filepath_weights_M2, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "history_V19 = modelV19.fit(train_generator, epochs=2, validation_data=validation_generator, callbacks=[early_stop, checkpoint_V19])"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 11,
+      "code": "history_M2 = modelM2.fit(train_generator, epochs=2, validation_data=validation_generator, callbacks=[early_stop, checkpoint_M2])"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 14,
+      "code": "from tensorflow.keras.models import Model, load_model\nfrom tensorflow.keras.layers import Input, Average\n\nmodels = [modelV19, modelM2]\n\nmodel_input = Input(shape=(224, 224, 3))\nmodel_outputs = [model(model_input) for model in models]\n\nensemble_output = Average()(model_outputs)\n\nensemble_model = Model(\n inputs = model_input,\n outputs = ensemble_output,\n name = \"Ensemble\"\n)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 15,
+      "code": "opt3 = Adam(learning_rate=0.0001, beta_1=0.9)\n\nensemble_model.compile(\n loss='binary_crossentropy',\n optimizer=opt3,\n metrics=['accuracy'])\n\nfilepath_weights_ensemble = \"data_small/best_weights_ensemble-{epoch:02d}-{val_accuracy:.4f}.keras\"\ncheckpoint_ensemble = ModelCheckpoint(filepath_weights_ensemble, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 16,
+      "code": "history_ensemble = ensemble_model.fit(train_generator, epochs=2, validation_data=validation_generator, callbacks=[early_stop, checkpoint_ensemble])"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 19,
+      "code": "ensemble_model.evaluate(test_generator)"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 20,
+      "code": "y_pred = ensemble_model.predict(test_generator)\nprint(\"One-hot encoded predicted labels:\")\nprint(y_pred)\ny_pred_classes = np.argmax(y_pred, axis=1)\nprint(y_pred_classes)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 22,
+    "code": "y_pred = ensemble_model.predict(test_generator)\ny_pred_classes = np.argmax(y_pred, axis=1)\n\ny_true_onehot = test_generator.classes\ny_true_classes = np.argmax(y_true_onehot, axis=1)"
+  }
+}

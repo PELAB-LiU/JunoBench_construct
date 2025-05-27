@@ -1,0 +1,58 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 14,
+      "code": "import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.preprocessing import LabelEncoder\nfrom sklearn import preprocessing\nfrom sklearn.metrics import accuracy_score\nimport warnings\nwarnings.filterwarnings('ignore')"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 15,
+      "code": "insurance_train = pd.read_csv(\"data/train_synthetic.csv.zip\")\ninsurance_test = pd.read_csv(\"data/test_synthetic.csv.zip\")"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 16,
+      "code": "insurance_train['Employment_Info_4'].fillna(insurance_train['Employment_Info_4'].mean(), inplace=True)\ninsurance_train['Insurance_History_5'].fillna(insurance_train['Insurance_History_5'].mean(), inplace=True)\ninsurance_train['Employment_Info_6'].fillna(insurance_train['Employment_Info_6'].mean(), inplace=True)\ninsurance_train['Family_Hist_2'].fillna(insurance_train['Family_Hist_2'].mean(), inplace=True)\ninsurance_train['Family_Hist_3'].fillna(insurance_train['Family_Hist_3'].mean(), inplace=True)\ninsurance_train['Family_Hist_4'].fillna(insurance_train['Family_Hist_4'].mean(), inplace=True)\ninsurance_train['Family_Hist_5'].fillna(insurance_train['Family_Hist_5'].mean(), inplace=True)\ninsurance_train['Medical_History_1'].fillna(insurance_train['Medical_History_1'].mean(), inplace=True)\ninsurance_train['Medical_History_10'].fillna(insurance_train['Medical_History_10'].mean(), inplace=True)\ninsurance_train['Medical_History_15'].fillna(insurance_train['Medical_History_15'].mean(), inplace=True)\ninsurance_train['Medical_History_24'].fillna(insurance_train['Medical_History_24'].mean(), inplace=True)\ninsurance_train['Medical_History_32'].fillna(insurance_train['Medical_History_32'].mean(), inplace=True)\n\nencode = LabelEncoder()\ninsurance_train['Product_Info_2'] = encode.fit_transform(insurance_train['Product_Info_2'])\n\ninsurance_train.dropna(axis=1, inplace = True)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 17,
+      "code": "insurance_test['Employment_Info_4'].fillna(insurance_test['Employment_Info_4'].mean(), inplace=True)\ninsurance_test['Insurance_History_5'].fillna(insurance_test['Insurance_History_5'].mean(), inplace=True)\ninsurance_test['Employment_Info_6'].fillna(insurance_test['Employment_Info_6'].mean(), inplace=True)\ninsurance_test['Family_Hist_2'].fillna(insurance_test['Family_Hist_2'].mean(), inplace=True)\ninsurance_test['Family_Hist_3'].fillna(insurance_test['Family_Hist_3'].mean(), inplace=True)\ninsurance_test['Family_Hist_4'].fillna(insurance_test['Family_Hist_4'].mean(), inplace=True)\ninsurance_test['Family_Hist_5'].fillna(insurance_test['Family_Hist_5'].mean(), inplace=True)\ninsurance_test['Medical_History_1'].fillna(insurance_test['Medical_History_1'].mean(), inplace=True)\ninsurance_test['Medical_History_10'].fillna(insurance_test['Medical_History_10'].mean(), inplace=True)\ninsurance_test['Medical_History_15'].fillna(insurance_test['Medical_History_15'].mean(), inplace=True)\ninsurance_test['Medical_History_24'].fillna(insurance_test['Medical_History_24'].mean(), inplace=True)\ninsurance_test['Medical_History_32'].fillna(insurance_test['Medical_History_32'].mean(), inplace=True)\n\ninsurance_test['Product_Info_2'] = encode.fit_transform(insurance_test['Product_Info_2'])\n\ninsurance_test.dropna(axis=1, inplace = True)\ninsurance_train.drop('InsuredInfo_7', axis = 1, inplace = True)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 18,
+      "code": "x = insurance_train.drop(['Id','Response'],axis = 1)\ny = insurance_train['Response']"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 19,
+      "code": "X_train, X_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=42)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 21,
+      "code": "RF = RandomForestClassifier(random_state = 1, n_estimators = 50, min_samples_leaf = 10, criterion = 'gini',\n oob_score = False)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 22,
+      "code": "RF.fit(X_train, y_train)\n\ny_pred = RF.predict(X_val)\n\naccuracy = accuracy_score(y_val, y_pred)\n\naccuracy"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 23,
+      "code": "RF.fit(x,y)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 24,
+      "code": "val_predictions = RF.predict(x)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 25,
+    "code": "accuracy = accuracy_score(val_predictions, y)\n\nprint(\"Accuracy: \", accuracy)"
+  }
+}

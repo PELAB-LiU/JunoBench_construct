@@ -1,0 +1,68 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import numpy as np\nimport pandas as pd"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "df=pd.read_csv('data/data.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 3,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 4,
+      "code": "df.info()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 6,
+      "code": "from sklearn.linear_model import LinearRegression\nmodel = LinearRegression()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 10,
+      "code": "valueofcity = (df['city'].unique())\nprint(valueofcity)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 11,
+      "code": "valueofcity.shape"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 13,
+      "code": "df['city'].replace({\n'Seattle' : 0,\n'Renton' : 1,\n'Bellevue' : 2,\n'Redmond' : 3,\n'Issaquah' : 4,\n'Kirkland' : 5,\n'Kent' : 6,\n'Auburn' : 7,\n'Sammamish' : 8,\n'Federal Way' : 9,\n'Shoreline' : 10,\n'Woodinville' : 11,\n'Maple Valley' : 12,\n'Mercer Island' : 13,\n'Burien' : 14,\n'Snoqualmie' : 15,\n'Kenmore' : 16,\n'Des Moines' : 17,\n'North Bend' : 18,\n'Covington' : 19,\n'Duvall' : 20,\n'Lake Forest Park' : 21,\n'Bothell' : 22,\n'Newcastle' : 23,\n'SeaTac' : 24,\n'Tukwila' : 25,\n'Vashon' : 26,\n'Enumclaw' : 27,\n'Carnation' : 28,\n'Normandy Park' : 29,\n'Clyde Hill' : 30,\n'Medina' : 31,\n'Fall City' : 32,\n'Black Diamond' : 33,\n'Ravensdale' : 34,\n'Pacific' : 35,\n'Algona' : 36,\n'Yarrow Point' : 37,\n'Skykomish' : 38,\n'Preston' : 39,\n'Milton' : 40,\n'Inglewood-Finn Hill': 41,\n'Snoqualmie Pass' : 42,\n'Beaux Arts Village' : 43},inplace=True)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 14,
+      "code": "df"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 15,
+      "code": "print(df['city'].unique())"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 16,
+      "code": "y=df['price']\nX=df[['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot',\n 'floors', 'waterfront', 'view', 'condition', 'sqft_above',\n 'sqft_basement', 'yr_built', 'yr_renovated', 'street', 'city',\n 'statezip', 'country']]"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 17,
+      "code": "from sklearn.model_selection import train_test_split\nX_train,X_test,y_train,y_test=train_test_split(X,y,train_size=0.8,random_state=2529)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 18,
+    "code": "model.fit(X_train,y_train)"
+  }
+}

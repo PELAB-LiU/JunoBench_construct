@@ -1,0 +1,123 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 22,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom imblearn.over_sampling import RandomOverSampler\nsns.set(style='whitegrid')"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 23,
+      "code": "train=pd.read_csv('data/train.csv')\ntest=pd.read_csv('data/train.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 24,
+      "code": "test.head()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 25,
+      "code": "train.head()"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 26,
+      "code": "train.shape"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 27,
+      "code": "train.isnull().sum()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 28,
+      "code": "numerical_columns=['Age', 'Region_Code','Annual_Premium','Vintage']\ncategorical_columns=['Gender','Driving_License','Previously_Insured','Vehicle_Age','Vehicle_Damage','Response']"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 29,
+      "code": "train[numerical_columns].describe()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 52,
+      "code": "num_feat = ['Age','Vintage']\ncat_feat = ['Gender', 'Driving_License', 'Previously_Insured', 'Vehicle_Age_lt_1_Year','Vehicle_Age_gt_2_Years','Vehicle_Damage_Yes','Region_Code','Policy_Sales_Channel']"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 53,
+      "code": "train['Gender'] = train['Gender'].map( {'Female': 0, 'Male': 1} ).astype(int)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 54,
+      "code": "train=pd.get_dummies(train,drop_first=True)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 55,
+      "code": "train=train.rename(columns={\"Vehicle_Age_< 1 Year\": \"Vehicle_Age_lt_1_Year\", \"Vehicle_Age_> 2 Years\": \"Vehicle_Age_gt_2_Years\"})\ntrain['Vehicle_Age_lt_1_Year']=train['Vehicle_Age_lt_1_Year'].astype('int')\ntrain['Vehicle_Age_gt_2_Years']=train['Vehicle_Age_gt_2_Years'].astype('int')\ntrain['Vehicle_Damage_Yes']=train['Vehicle_Damage_Yes'].astype('int')"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 56,
+      "code": "from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler, RobustScaler\nss = StandardScaler()\ntrain[num_feat] = ss.fit_transform(train[num_feat])\n\nmm = MinMaxScaler()\ntrain[['Annual_Premium']] = mm.fit_transform(train[['Annual_Premium']])"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 57,
+      "code": "train=train.drop('id',axis=1)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 58,
+      "code": "for column in cat_feat:\n train[column] = train[column].astype('str')"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 59,
+      "code": "train"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 60,
+      "code": "test['Gender'] = test['Gender'].map( {'Female': 0, 'Male': 1} ).astype(int)\ntest=pd.get_dummies(test,drop_first=True)\ntest=test.rename(columns={\"Vehicle_Age_< 1 Year\": \"Vehicle_Age_lt_1_Year\", \"Vehicle_Age_> 2 Years\": \"Vehicle_Age_gt_2_Years\"})\ntest['Vehicle_Age_lt_1_Year']=test['Vehicle_Age_lt_1_Year'].astype('int')\ntest['Vehicle_Age_gt_2_Years']=test['Vehicle_Age_gt_2_Years'].astype('int')\ntest['Vehicle_Damage_Yes']=test['Vehicle_Damage_Yes'].astype('int')"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 61,
+      "code": "from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler, RobustScaler\nss = StandardScaler()\ntest[num_feat] = ss.fit_transform(test[num_feat])\n\nmm = MinMaxScaler()\ntest[['Annual_Premium']] = mm.fit_transform(test[['Annual_Premium']])"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 62,
+      "code": "for column in cat_feat:\n test[column] = test[column].astype('str')"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 63,
+      "code": "from sklearn.model_selection import train_test_split\n\ntrain_target=train['Response']\ntrain=train.drop(['Response'], axis = 1)\nx_train,x_test,y_train,y_test = train_test_split(train,train_target, random_state = 0)"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 64,
+      "code": "id=test.id"
+    },
+    {
+      "execution_count": 22,
+      "code_cell_id": 65,
+      "code": "test=test.drop('id',axis=1)"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 66,
+      "code": "x_train.columns"
+    }
+  ],
+  "target": {
+    "code_cell_id": 78,
+    "code": "for column in cat_feat:\n\n x_train[column] = x_train[column].astype('float').astype('int')\n x_test[column] = x_test[column].astype('float').astype('int')"
+  }
+}

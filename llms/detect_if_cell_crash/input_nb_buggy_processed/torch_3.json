@@ -1,0 +1,98 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\n\nimport os\nfor dirname, _, filenames in os.walk('data'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "from transformers import AutoModel,AutoConfig,AutoTokenizer,AutoModelForMultipleChoice"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "MODEL_NAME = 'microsoft/deberta-v2-xlarge'\nMODEL_NAME_CHOICE = 'vinai/phobert-base'"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "config = AutoConfig.from_pretrained(MODEL_NAME_CHOICE)\nconfig"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "config.num_labels = 2"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "from transformers.modeling_outputs import MultipleChoiceModelOutput"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "from torch import nn"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "class CustomModelMultichoice(nn.Module):\n def __init__(self,config,num_choice):\n super(CustomModelMultichoice,self).__init__()\n model = AutoModelForMultipleChoice.from_config(config)\n model.classifier = nn.Linear(768,2)\n self.model = model\n\n self.sigmoid = nn.Sigmoid()\n self.num_choice = num_choice\n def forward(self,input_ids = None,token_type_ids = None ,attention_mask = None,labels = None):\n outputs = self.model(input_ids=input_ids,token_type_ids=token_type_ids,attention_mask=attention_mask)\n logits = self.sigmoid(outputs.logits)\n loss = None\n if labels is not None:\n loss_func = nn.NLLLoss()\n loss = loss_func(logits.view(-1,self.num_choice),labels.view(-1))\n return MultipleChoiceModelOutput(loss = loss,logits=logits,hidden_states= None,attentions =None)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "config = AutoConfig.from_pretrained(MODEL_NAME_CHOICE)\n\nCustomModel = CustomModelMultichoice(config,3)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 11,
+      "code": "prompt = \"Bác Hồ là người nước nào ?.\"\ncandidate1 = \"Việt Nam\"\ncandidate2 = \"Mỹ\"\ncandidate3 = 'Việt Nam'"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 12,
+      "code": "from transformers import AutoTokenizer\n\ntokenizer = AutoTokenizer.from_pretrained(MODEL_NAME_CHOICE)\ninputs = tokenizer([[prompt, candidate1], [prompt, candidate2],[prompt, candidate3]], return_tensors=\"pt\", padding=True)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 13,
+      "code": "import torch\nlabels = torch.tensor(0).unsqueeze(0)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 14,
+      "code": "labels"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 15,
+      "code": "inputs['input_ids'] = inputs['input_ids'].unsqueeze(0)\ninputs['token_type_ids'] = inputs['token_type_ids'].unsqueeze(0)\ninputs['attention_mask'] = inputs['attention_mask'].unsqueeze(0)"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 16,
+      "code": "CustomModel.eval()"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 18,
+      "code": "CustomModel.classifier = nn.Linear(768,2)"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 20,
+      "code": "target = torch.tensor([[1, 0, 1]])\ntarget"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 21,
+      "code": "target.shape"
+    }
+  ],
+  "target": {
+    "code_cell_id": 24,
+    "code": "out = CustomModel(**inputs,labels = target)"
+  }
+}

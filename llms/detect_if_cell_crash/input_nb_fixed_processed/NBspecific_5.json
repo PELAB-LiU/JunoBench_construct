@@ -1,0 +1,28 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom mpl_toolkits import mplot3d\nimport warnings\n\nwarnings.filterwarnings('ignore')"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "df=pd.read_csv('data/kdd_train.csv.zip')\ndf.head()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 4,
+      "code": "print('number of classes:', df['labels'].nunique())\nprint('')\nlabel_counts = df['labels'].value_counts()\nplt.figure(figsize=(18,6));\nsns.barplot(y=label_counts.index, x=label_counts.values, color='Grey');\nplt.title('values per class');\ndisplay(label_counts)\n\nbinary_class = []\nfor label in df['labels']:\n if label !='normal':\n binary_class.append('malicious')\n else:\n binary_class.append('normal')\nbinary_class = pd.Series(binary_class)\nplt.figure()\nbinary_class.value_counts().plot(kind='pie', label='traffic proportions', autopct='%.2f%%' );"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 10,
+      "code": "numeric_columns = []\ncategorical_columns = []\nfor column in df.columns:\n if df[column].dtype != 'object':\n numeric_columns.append(column)\n else:\n categorical_columns.append(column)\n\ncategorical_columns = categorical_columns[:-1]\nlabels=df['labels'].unique()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 14,
+    "code": "df.drop(columns='num_outbound_cmds', inplace=True)\n\nnumeric_columns.remove('num_outbound_cmds')"
+  }
+}

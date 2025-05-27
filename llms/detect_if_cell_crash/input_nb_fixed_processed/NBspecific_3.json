@@ -1,0 +1,58 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\nfrom datetime import datetime\n\nimport os\nfor dirname, _, filenames in os.walk('data'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv(r'data/excelC_NEW12.csv')\ndf=df.sort_values('all',ascending=False)\ndf"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df['weekday'] = df['Date'].apply(lambda x: datetime.strftime(datetime.strptime(x,\"%Y/%m/%d\"), '%w'))\ndf"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "for i,j in df[['holiday','weekday']].iterrows():\n if (j['weekday']=='0' or j['weekday']=='6' ):\n df.loc[i,'holiday']=1\ndf"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "X = np.array(df.filter(['n','v','adj','adv','freq_s','repeat_letter_s']).astype(float).dropna())\ny = np.array(df.filter(['hard_p']).dropna()).reshape(-1)\n\nfrom sklearn.model_selection import train_test_split\nX_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,shuffle=False)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "print(X_train.shape)\nprint(X_test.shape)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "X_train=X_train\nprint(y_train.shape,X_train.shape)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "from sklearn.linear_model import LinearRegression\nmodel = LinearRegression()\nmodel.fit(X_train, y_train)\nyFit = model.predict(X_train)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "from sklearn.metrics import mean_squared_error, mean_absolute_error, median_absolute_error\nfrom scipy import stats\nimport matplotlib.pyplot as plt\n\nprint('回归截距: b={}'.format(model.intercept_))\nprint('回归系数: w={}'.format(model.coef_))\n\nprint('R2 确定系数：{:.4f}'.format(model.score(X_train, y_train)))\nprint('均方误差：{:.4f}'.format(mean_squared_error(y_train, yFit)))\nprint('平均绝对值误差：{:.4f}'.format(mean_absolute_error(y_train, yFit)))\nprint('中位绝对值误差：{:.4f}'.format(median_absolute_error(y_train, yFit)))"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 9,
+      "code": "m = X_train.shape[1]\nn = X_train.shape[0]\nyMean = np.mean(y_train)\nSST = sum((y_train-yMean)**2)\nSSR = sum((yFit-yMean)**2)\nSSE = sum((y_train-yFit)**2)\nFstats = (SSR/m) / (SSE/(n-m-1))\nprobFstats = stats.f.sf(Fstats, m, n-m-1)\nprint('F统计量：{:.4f}'.format(Fstats))\nprint('F检验的P值：{:.4e}'.format(probFstats))\nprint('R2：{:.4f}'.format(SSR/SST))\n\nfig, ax = plt.subplots(figsize=(8, 6))\nax.plot(range(len(y_train)), y_train, 'b-.', label='Sample')\nax.plot(range(len(y_train)), yFit, 'r-', label='Fitting')\nax.legend(loc='best')\nplt.title('Linear regression fitting image')\nplt.xlabel('period')\nplt.ylabel('percent')\nplt.show()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 11,
+    "code": "m = X_test.shape[1]\nn = X_test.shape[0]\nyMean = np.mean(y_test)\nSST = sum((y_test-yMean)**2)\nSSR = sum((yFit-yMean)**2)\nSSE = sum((y_test-yFit)**2)\nFstats = (SSR/m) / (SSE/(n-m-1))\nprobFstats = stats.f.sf(Fstats, m, n-m-1)\nprint('F统计量：{:.4f}'.format(Fstats))\nprint('FF检验的P值：{:.4e}'.format(probFstats))\n\nfig, ax = plt.subplots(figsize=(8, 6))\nax.plot(range(len(y_test)), y_test, 'b-.', label='Sample')\nax.plot(range(len(y_test)), yFit, 'r-', label='Fitting')\nax.legend(loc='best')\nplt.xlabel('period')\nplt.ylabel('percent')\nplt.show()"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "train=pd.read_csv('data/train.csv')\ntest=pd.read_csv('data/test.csv')\nsubmission=pd.read_csv('data/sample_submission.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "train.head()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "train.shape"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "test.shape"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "submission.shape"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "new=(((train.isnull().sum())/(train.shape[0]))*100)\nnew.to_list()"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 8,
+      "code": "hmv_col=[]\nfor col in train.columns:\n if train[col].isnull().sum()/train.shape[0] > 0.46:\n\n hmv_col.append(col)\n\nprint('\\nColumns that have high number of missing values: ', hmv_col)\nprint(\"No of column before dropping high missing values column: \",len(train.columns))\n\ntrain.drop(hmv_col,axis=1,inplace=True)\ntest.drop(hmv_col,axis=1,inplace=True)\nprint(\"No of columns after dropping high missing value column: \",len(train.columns))"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 9,
+      "code": "categorical_col = list(train.select_dtypes(include=['object']).columns)\nnumerical_col =list(train.select_dtypes(exclude=['object']).columns)\n\nprint(\"Categorical columns: \", categorical_col,\"\\nTotal Categorical column:\", len(categorical_col))\nprint(\"\\n\")\nprint(\"Numerical columns: \", numerical_col, \"\\nTotal Numerical column:\", len(numerical_col))"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 10,
+      "code": "null_count = list(train[categorical_col].isnull().sum())\nunique_count = list(train[categorical_col].nunique())"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 11,
+      "code": "data = {\n 'Null count': null_count,\n 'Unique count': unique_count\n}\n\nprint(pd.DataFrame(data,index=categorical_col))"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 12,
+      "code": "train[categorical_col].head()"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 13,
+      "code": "null_count = list(train[categorical_col].isnull().sum())\nunique_count = list(train[categorical_col].nunique())"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 14,
+      "code": "data = {\n 'Null count': null_count,\n 'Unique count': unique_count\n}\n\nprint(pd.DataFrame(data,index=categorical_col))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 15,
+    "code": "test=test.drop(['Alley','PoolQC','Fence','MiscFeature','Id'],axis=1)"
+  }
+}

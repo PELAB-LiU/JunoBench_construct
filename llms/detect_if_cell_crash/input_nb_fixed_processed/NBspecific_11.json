@@ -1,0 +1,78 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import torch\nimport torchvision\nfrom torchvision import datasets,transforms\nfrom torch.autograd import Variable\n\nimport torch.utils.data.dataloader as Data\nimport torch.nn as nn\nfrom torchvision import models\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport cv2"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 4,
+      "code": "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 5,
+      "code": "image_path=\"data/cow.jpeg\"\norig = cv2.imread(image_path)[..., ::-1]\norig = cv2.resize(orig, (224, 224))\nimg = orig.copy().astype(np.float32)\n\nmean = [0.485, 0.456, 0.406]\nstd = [0.229, 0.224, 0.225]\nimg /= 255.0\nimg = (img - mean) / std\nimg = img.transpose(2, 0, 1)\n\nimg=np.expand_dims(img, axis=0)\nprint(img.shape)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 6,
+      "code": "model = models.alexnet(pretrained=True).to(device).eval()"
+    },
+    {
+      "execution_count": 43,
+      "code_cell_id": 7,
+      "code": "max_iterations=100\n\nlearning_rate=0.01\n\nbinary_search_steps=2\n\ninitial_const=1e2\nconfidence=initial_const\n\nk=40\n\nboxmin = -3.0\nboxmax = 3.0\n\nnum_labels=1000"
+    },
+    {
+      "execution_count": 44,
+      "code_cell_id": 8,
+      "code": "target_label=288\ntlab=Variable(torch.from_numpy(np.eye(num_labels)[target_label]).to(device).float())"
+    },
+    {
+      "execution_count": 45,
+      "code_cell_id": 9,
+      "code": "np.eye(num_labels)[target_label].shape"
+    },
+    {
+      "execution_count": 46,
+      "code_cell_id": 10,
+      "code": "tlab.shape"
+    },
+    {
+      "execution_count": 47,
+      "code_cell_id": 11,
+      "code": "shape = [1,3,224,224]"
+    },
+    {
+      "execution_count": 48,
+      "code_cell_id": 12,
+      "code": "lower_bound = 0\nc=initial_const\nupper_bound = 1e10\n\no_bestl2 = 1e10\no_bestscore = -1\no_bestattack = [np.zeros(shape)]"
+    },
+    {
+      "execution_count": 49,
+      "code_cell_id": 13,
+      "code": "boxmul = (boxmax - boxmin) / 2.\nboxplus = (boxmin + boxmax) / 2.\n\nfor outer_step in range(binary_search_steps):\n print(\"o_bestl2={} confidence={}\".format(o_bestl2,confidence) )\n\n timg = Variable(torch.from_numpy(np.arctanh((img - boxplus) / boxmul * 0.999999)).to(device).float())\n modifier=Variable(torch.zeros_like(timg).to(device).float())\n\n modifier.requires_grad = True\n\n optimizer = torch.optim.Adam([modifier],lr=learning_rate)\n\n for iteration in range(1,max_iterations+1):\n optimizer.zero_grad()\n\n newimg = torch.tanh(modifier + timg) * boxmul + boxplus\n\n output=model(newimg)\n\n loss2=torch.dist(newimg,(torch.tanh(timg) * boxmul + boxplus),p=2)\n\n real=torch.max(output*tlab)\n other=torch.max((1-tlab)*output)\n loss1=other-real+k\n loss1=torch.clamp(loss1,min=0)\n\n loss1=confidence*loss1\n\n loss=loss1+loss2\n\n loss.backward(retain_graph=True)\n\n optimizer.step()\n\n l2=loss2\n\n sc=output.data.cpu().numpy()\n\n if iteration%(max_iterations//10) == 0:\n print(\"iteration={} loss={} loss1={} loss2={}\".format(iteration,loss,loss1,loss2))\n\n if (l2 < o_bestl2) and (np.argmax(sc) == target_label ):\n print(\"attack success l2={} target_label={}\".format(l2,target_label))\n o_bestl2 = l2\n o_bestscore = np.argmax(sc)\n o_bestattack = newimg.data.cpu().numpy()\n\n confidence_old=-1\n\n if (o_bestscore == target_label) and o_bestscore != -1:\n\n upper_bound = min(upper_bound,confidence)\n if upper_bound < 1e9:\n print()\n confidence_old=confidence\n confidence = (lower_bound + upper_bound)/2\n else:\n lower_bound = max(lower_bound,confidence)\n confidence_old=confidence\n if upper_bound < 1e9:\n confidence = (lower_bound + upper_bound)/2\n else:\n confidence *= 10\n\n print(\"outer_step={} confidence {}->{}\".format(outer_step,confidence_old,confidence))"
+    },
+    {
+      "execution_count": 50,
+      "code_cell_id": 14,
+      "code": "print(o_bestattack.shape)\nprint(img.shape)"
+    },
+    {
+      "execution_count": 51,
+      "code_cell_id": 15,
+      "code": "def show_images_diff(original_img,original_label,adversarial_img,adversarial_label):\n plt.figure()\n\n plt.subplot(131)\n plt.title('Original')\n plt.imshow(original_img)\n plt.axis('off')\n\n plt.subplot(132)\n plt.title('Adversarial')\n plt.imshow(adversarial_img)\n plt.axis('off')\n\n plt.subplot(133)\n plt.title('Adversarial-Original')\n difference = adversarial_img - original_img\n\n l0=np.where(difference!=0)[0].shape[0]\n l2=np.linalg.norm(difference)\n\n print(\"l0={} l2={}\".format(l0,l2))\n\n difference=difference / abs(difference).max()/2.0+0.5\n\n plt.imshow(difference,cmap=plt.cm.gray)\n plt.axis('off')\n plt.tight_layout()\n plt.show()"
+    },
+    {
+      "execution_count": 56,
+      "code_cell_id": 16,
+      "code": "adv=o_bestattack[0]\nprint(adv.shape)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 19,
+    "code": "plt.imshow(adv)"
+  }
+}

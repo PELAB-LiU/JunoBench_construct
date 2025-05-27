@@ -1,0 +1,88 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import tensorflow as tf\nfrom transformers import TFAutoModel"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 1,
+      "code": "import pandas as pd\nimport json\ndf_psytar = pd.read_csv(\"data/PsyTAR.csv\")\ndf_psytar.head(5)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 4,
+      "code": "df=df_psytar"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 5,
+      "code": "df.head(5)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 6,
+      "code": "df_1 = df[df['ADR']==1]\ndf_0 = df[df['ADR']==0]"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 7,
+      "code": "df_0 = df_0.sample(df_1.shape[0])"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 8,
+      "code": "df = pd.concat([df_1,df_0])"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 9,
+      "code": "from transformers import AutoTokenizer\ntokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 10,
+      "code": "def process_data(row):\n\n text = row['sentences']\n text = str(text)\n text = ' '.join(text.split())\n\n encodings = tokenizer(text, padding=\"max_length\", truncation=True, max_length=128)\n\n label = 0\n if row['ADR'] == 1:\n label += 1\n\n encodings['label'] = label\n encodings['text'] = text\n\n return encodings"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 11,
+      "code": "print(process_data({\n 'sentences': 'this is a sample review of a movie.',\n 'ADR': 1\n}))"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 12,
+      "code": "processed_data = []\n\nfor i in range(len(df[:1000])):\n processed_data.append(process_data(df.iloc[i]))"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 13,
+      "code": "train_data = df[\"sentences\"]\ntrain_labels = df['ADR']"
+    },
+    {
+      "execution_count": 50,
+      "code_cell_id": 15,
+      "code": "import pyarrow as pa\nfrom datasets import Dataset\n\ntrain_hg = Dataset(pa.Table.from_pandas(train_df))\nvalid_hg = Dataset(pa.Table.from_pandas(valid_df))"
+    },
+    {
+      "execution_count": 51,
+      "code_cell_id": 16,
+      "code": "class HuggingFaceLayer(tf.keras.layers.Layer):\n def __init__(self, model_name, output_hidden_states=False, trainable=False, **kwargs):\n super(HuggingFaceLayer, self).__init__(**kwargs)\n self.model = TFAutoModel.from_pretrained(model_name, output_hidden_states=output_hidden_states)\n self.trainable = trainable\n\n def build(self, input_shape):\n self.model.built = True\n if not self.trainable:\n self.model.trainable = False\n super(HuggingFaceLayer, self).build(input_shape)\n\n def call(self, inputs, **kwargs):\n outputs = self.model(inputs, **kwargs)\n return outputs"
+    },
+    {
+      "execution_count": 52,
+      "code_cell_id": 17,
+      "code": ""
+    },
+    {
+      "execution_count": 53,
+      "code_cell_id": 18,
+      "code": "model_name = 'bert-base-uncased'\nmodel = tf.keras.Sequential()\nmodel.add(HuggingFaceLayer(model_name=model_name))\nmodel.add(tf.keras.layers.Dense(1, activation='sigmoid'))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 19,
+    "code": "model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\nmodel.fit(train_data, train_labels, epochs=10)"
+  }
+}

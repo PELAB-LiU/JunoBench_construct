@@ -1,0 +1,58 @@
+{
+  "executed": [
+    {
+      "execution_count": 2,
+      "code_cell_id": 0,
+      "code": "try:\n\n %tensorflow_version 2.x\nexcept Exception:\n pass\nimport tensorflow as tf\n\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras.layers import Dense, Conv2D, Flatten, Dropout, MaxPooling2D\nfrom tensorflow.keras.preprocessing.image import ImageDataGenerator\n\nimport os\nimport numpy as np\nimport matplotlib.pyplot as plt"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 1,
+      "code": "PATH = 'data_small/cats_and_dogs'\n\ntrain_dir = os.path.join(PATH, 'train')\nvalidation_dir = os.path.join(PATH, 'validation')\ntest_dir = os.path.join(PATH, 'test')\n\ntotal_train = sum([len(files) for r, d, files in os.walk(train_dir)])\ntotal_val = sum([len(files) for r, d, files in os.walk(validation_dir)])\ntotal_test = len(os.listdir(test_dir))\n\nprint('Train:', total_train)\nprint('Validation:', total_val)\nprint('Test:', total_test)\n\nbatch_size = 128\nepochs = 30\nIMG_HEIGHT = 150\nIMG_WIDTH = 150"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 2,
+      "code": "train_image_generator = ImageDataGenerator(rescale = 1./255)\nvalidation_image_generator = ImageDataGenerator(rescale = 1./255)\ntest_image_generator = ImageDataGenerator(rescale = 1./255)\n\ntrain_data_gen = train_image_generator.flow_from_directory(\n directory =train_dir,\n batch_size = batch_size,\n class_mode = \"binary\",\n target_size=(IMG_HEIGHT,IMG_WIDTH)\n)\nval_data_gen = validation_image_generator.flow_from_directory(\n directory = validation_dir,\n batch_size = batch_size,\n class_mode = \"binary\",\n target_size=(IMG_HEIGHT,IMG_WIDTH)\n)\ntest_data_gen = test_image_generator.flow_from_directory(\n PATH,\n target_size=(IMG_HEIGHT, IMG_WIDTH),\n batch_size=batch_size,\n classes=['test'],\n shuffle=False)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 3,
+      "code": "def plotImages(images_arr, probabilities = False):\n fig, axes = plt.subplots(len(images_arr), 1, figsize=(5,len(images_arr) * 3))\n if probabilities is False:\n for img, ax in zip( images_arr, axes):\n ax.imshow(img)\n ax.axis('off')\n else:\n for img, probability, ax in zip( images_arr, probabilities, axes):\n ax.imshow(img)\n ax.axis('off')\n if probability > 0.5:\n ax.set_title(\"%.2f\" % (probability*100) + \"% dog\")\n else:\n ax.set_title(\"%.2f\" % ((1-probability)*100) + \"% cat\")\n plt.show()\n\nsample_training_images, _ = next(train_data_gen)\nplotImages(sample_training_images[:5])"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 4,
+      "code": "train_image_generator = ImageDataGenerator(\n rescale=1./255,\n rotation_range=30,\n width_shift_range=0.2,\n height_shift_range=0.2,\n zoom_range=0.1,\n horizontal_flip=False,\n vertical_flip=True,\n shear_range=0.2,\n channel_shift_range=0.2,\n)"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 5,
+      "code": "train_data_gen = train_image_generator.flow_from_directory(batch_size=batch_size,\n directory=train_dir,\n target_size=(IMG_HEIGHT, IMG_WIDTH),\n class_mode='binary')\n\naugmented_images = [train_data_gen[0][0][0] for i in range(5)]\n\nplotImages(augmented_images)"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 6,
+      "code": "from tensorflow.keras.optimizers import Adam\nmodel = Sequential()\nfrom tensorflow.keras import datasets, layers, models, Input\nmodel.add(Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3)))\nmodel.add(layers.Conv2D(16, (3, 3), activation='relu', input_shape=(32, 32, 3)))\nmodel.add(layers.MaxPooling2D((2, 2)))\nmodel.add(layers.Conv2D(16, (3, 3), activation='relu'))\nmodel.add(layers.MaxPooling2D((2, 2)))\nmodel.add(layers.Conv2D(16, (3, 3), activation='relu'))\nmodel.add(layers.MaxPooling2D((2, 2)))\nmodel.add(layers.Flatten())\nmodel.add(Dense(512, activation='relu'))\nmodel.add(Dense(1, activation='sigmoid'))\nmodel.summary()\noptimizer = Adam(0.0005)\nmodel.compile(optimizer=optimizer,\n loss='binary_crossentropy',\n metrics=['accuracy'])"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 7,
+      "code": "from math import ceil\ntrain_steps = int(ceil(1. * total_train / batch_size))\nval_steps = int(ceil(1. * total_val / batch_size))\n\nprint(train_steps, val_steps)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 8,
+      "code": "history = model.fit(\n train_data_gen,\n validation_data=val_data_gen,\n epochs= 2\n)"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 9,
+      "code": "model.save(\"train.h5\")"
+    }
+  ],
+  "target": {
+    "code_cell_id": 10,
+    "code": "model.load (\"train.h5\")"
+  }
+}

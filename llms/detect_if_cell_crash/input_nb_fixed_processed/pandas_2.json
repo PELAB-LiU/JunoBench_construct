@@ -1,0 +1,28 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport missingno"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "train_df = pd.read_csv(\"data/train.csv\",index_col='Id')\ntest_df = pd.read_csv(\"data/test.csv\",index_col='Id')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 3,
+      "code": "train_df"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 27,
+      "code": "data=pd.concat([train_df, test_df], axis=0)\ncols=data.columns[data.isna().any()].tolist()\nmissingvalue=pd.DataFrame(data[cols].isna().sum(), columns=['Number_missing'])\nmissingvalue['Percentage_missing']=np.round(100*missingvalue['Number_missing']/len(data),2)\nmissingvalue"
+    }
+  ],
+  "target": {
+    "code_cell_id": 28,
+    "code": "cat=[]\nnum=[]\na=0\nx=list(data.columns.values)\nfor b in data.dtypes:\n if b == 'object':\n cat.append(x[a])\n else:\n num.append(x[a])\n a=a+1\n\ndata.drop(['LotFrontage','Alley','FireplaceQu','PoolQC','Fence', 'MiscFeature'], axis=1, inplace=True)"
+  }
+}

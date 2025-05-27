@@ -1,0 +1,98 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import os\nimport shutil\nimport itertools\nimport pathlib\nfrom PIL import Image\n\nimport cv2\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\nimport seaborn as sns\nsns.set_style('whitegrid')\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import confusion_matrix , classification_report\n\nimport tensorflow as tf\nfrom tensorflow import keras\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras.layers import Conv2D , MaxPooling2D , Flatten , Activation , Dense , Dropout , BatchNormalization\nfrom tensorflow.keras.preprocessing.image import ImageDataGenerator\nfrom tensorflow.keras.optimizers import Adam , Adamax\nfrom tensorflow.keras import regularizers\n\nimport warnings\nwarnings.filterwarnings('ignore')"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "path1 = 'data_small/Training'\nsubfolders1 = os.listdir(path1)\nsubfolder_counts1 = [len(os.listdir(os.path.join(path1, subfolder))) for subfolder in subfolders1]\n\nx_labels = subfolders1\nx = range(len(x_labels))\ny = subfolder_counts1\nplt.bar(x, y)\n\nplt.xticks(x, x_labels)\nplt.xlabel('Categories of Brain Tumor')\nplt.ylabel('Number of Images')\nplt.title('Train Dataset')\n\nplt.show()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "path2 = 'data_small/Testing'\nprint(len(path2))\nsubfolders2 = os.listdir(path2)\nsubfolder_counts2 = [len(os.listdir(os.path.join(path2, subfolder))) for subfolder in subfolders2]\n\nx_labels = subfolders2\nx = range(len(x_labels))\ny = subfolder_counts2\nplt.bar(x, y)\n\nplt.xticks(x, x_labels)\nplt.xlabel('Categories of Brain Tumor')\nplt.ylabel('Number of Images')\nplt.title('Test Dataset')\nplt.show()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "train_dir = 'data_small/Training'\ntest_dir = 'data_small/Testing'"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "import matplotlib.pyplot as plt\nimport os\nfrom PIL import Image\n\nclass_folders = ['glioma', 'meningioma', 'pituitary', 'notumor']\n\nplt.figure(figsize=(12, 8))\n\nfor i, folder in enumerate(class_folders):\n sub_dir = os.path.join(train_dir, folder)\n sample_images = os.listdir(sub_dir)[:5]\n\n for j, image_name in enumerate(sample_images):\n img = Image.open(os.path.join(sub_dir, image_name))\n plt.subplot(4, 5, i * 5 + j + 1)\n plt.imshow(img)\n plt.title(f\"Class: {folder}\\nSample {j+1}\")\n plt.axis('off')\n\nplt.tight_layout()\nplt.show()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "train_datagen = ImageDataGenerator(\n rescale=1./255,\n rotation_range=20,\n shear_range=0.2,\n zoom_range=0.2,\n horizontal_flip=True)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "test_datagen = ImageDataGenerator(rescale=1./255)\n\ntrain_generator = train_datagen.flow_from_directory(\n train_dir,\n target_size=(224, 224),\n batch_size=32,\n class_mode='categorical',\n shuffle=False\n)\n\ntest_generator = test_datagen.flow_from_directory(\n test_dir,\n target_size=(224, 224),\n batch_size=32,\n class_mode='categorical',\n shuffle=False\n)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "from tensorflow.keras.applications import InceptionV3\nfrom tensorflow.keras.layers import GlobalAveragePooling2D\nfrom tensorflow.keras.models import Model\n\nbase_model = InceptionV3(weights='imagenet', include_top=False, input_shape=(224, 224, 3))\n\nfor layer in base_model.layers:\n layer.trainable = False\n\nx = base_model.output\nx = GlobalAveragePooling2D()(x)\n\ninception_model = Model(inputs=base_model.input, outputs=x)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "train_features = inception_model.predict(train_generator)\ntest_features = inception_model.predict(test_generator)"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 9,
+      "code": "from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Reshape\nfrom keras.layers import Bidirectional, LSTM\nfrom tensorflow.keras.models import Model"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 10,
+      "code": "input_features = Input(shape=(2048,), name='input_features')\n\nreshaped_features = Reshape((32, 64, 1))(input_features)\n\ncnn_output = Conv2D(32, (3, 3), activation='relu')(reshaped_features)\ncnn_output = MaxPooling2D(pool_size=(2, 2))(cnn_output)\ncnn_output = Conv2D(32, (3, 3), activation='relu')(cnn_output)\ncnn_output = MaxPooling2D(pool_size=(2, 2))(cnn_output)\ncnn_output = Conv2D(64, (3, 3), activation='relu')(cnn_output)\ncnn_output = MaxPooling2D(pool_size=(2, 2))(cnn_output)\ncnn_output = Flatten()(cnn_output)\n\ncnn_output_reshaped = Reshape((1, -1))(cnn_output)\n\nbi_lstm_output = Bidirectional(LSTM(64, return_sequences=True))(cnn_output_reshaped)\nbi_lstm_output = Bidirectional(LSTM(64, return_sequences=True))(bi_lstm_output)\n\nbi_lstm_output_flatten = Flatten()(bi_lstm_output)\n\ndense_layer = Dense(128, activation='relu')(bi_lstm_output_flatten)\ndense_layer = Dropout(0.5)(dense_layer)\ndense_layer = Dense(64, activation='relu')(dense_layer)\noutput = Dense(4, activation='softmax')(dense_layer)\n\ncnn_model = Model(inputs=input_features, outputs=output)\ncnn_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])\ncnn_model.summary()"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 11,
+      "code": "from tensorflow.keras.utils import to_categorical\n\ntrain_labels_one_hot = to_categorical(train_generator.classes, num_classes=4)\ntest_labels_one_hot = to_categorical(test_generator.classes, num_classes=4)"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 12,
+      "code": "from tensorflow.keras.callbacks import EarlyStopping\n\nearly_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 13,
+      "code": "history_cnn = cnn_model.fit(\n train_features,\n train_labels_one_hot,\n validation_data=(test_features, test_labels_one_hot),\n epochs=2,\n batch_size=32,\n callbacks=[early_stopping]\n)"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 14,
+      "code": "from tensorflow.keras.models import Model\nfrom tensorflow.keras.layers import Input, Reshape, Conv2D, MaxPooling2D, Bidirectional, LSTM, Dropout, Flatten, Dense\nfrom tensorflow.keras.optimizers import Adam\nfrom tensorflow.keras.utils import to_categorical\nfrom kerastuner.tuners import RandomSearch\nfrom kerastuner.engine.hyperparameters import HyperParameters\nfrom tensorflow.keras.optimizers import Adam, RMSprop, SGD"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 15,
+      "code": "input_features = Input(shape=(2048,), name='input_features')\n\nreshaped_features = Reshape((32, 64, 1))(input_features)\n\ncnn_output = Conv2D(32, (3, 3), activation='relu')(reshaped_features)\ncnn_output = MaxPooling2D(pool_size=(2, 2))(cnn_output)\ncnn_output = Conv2D(64, (3, 3), activation='relu')(cnn_output)\ncnn_output = MaxPooling2D(pool_size=(2, 2))(cnn_output)\ncnn_output = Conv2D(128, (3, 3), activation='relu')(cnn_output)\ncnn_output = MaxPooling2D(pool_size=(2, 2))(cnn_output)\ncnn_output = Flatten()(cnn_output)\n\ncnn_output_reshaped = Reshape((1, -1))(cnn_output)\n\nbi_lstm_output = Bidirectional(LSTM(128, return_sequences=True))(cnn_output_reshaped)\nbi_lstm_output = Bidirectional(LSTM(64, return_sequences=True))(bi_lstm_output)\n\nbi_lstm_output_flatten = Flatten()(bi_lstm_output)"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 16,
+      "code": "def build_model(hp):\n dense_units = hp.Int('dense_units', min_value=64, max_value=256, step=32)\n lstm_units = hp.Int('lstm_units', min_value=32, max_value=128, step=32)\n dropout_rate = hp.Float('dropout_rate', min_value=0.2, max_value=0.5, step=0.1)\n optimizer_choice = hp.Choice('optimizer', values=['adam', 'rmsprop', 'sgd'])\n batch_size = hp.Choice('batch_size', values=[16, 32, 64])\n\n if optimizer_choice == 'adam':\n optimizer = Adam(learning_rate=1e-3)\n elif optimizer_choice == 'rmsprop':\n optimizer = RMSprop(learning_rate=1e-3)\n else:\n optimizer = SGD(learning_rate=1e-3)\n dense_layer = Dense(dense_units, activation='relu')(bi_lstm_output_flatten)\n dense_layer = Dropout(dropout_rate)(dense_layer)\n dense_layer = Dense(64, activation='relu')(dense_layer)\n output = Dense(4, activation='softmax')(dense_layer)\n\n cnn_model = Model(inputs=input_features, outputs=output)\n cnn_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])\n return cnn_model"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 17,
+      "code": "tuner = RandomSearch(\n build_model,\n objective='val_accuracy',\n max_trials=2,\n directory='hyperparameter_tuning',\n project_name='cnn_model_tuning'\n)\n\ntuner.search(\n train_features,\n train_labels_one_hot,\n epochs=2,\n validation_data=(test_features, test_labels_one_hot),\n callbacks=[early_stopping]\n)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 18,
+    "code": "best_model = tuner.get_best_models(1)[0]\nbest_model.summary()\n\nbest_trials = tuner.oracle.get_best_trials(5)\n\nplt.figure(figsize=(10, 6))\nfor trial in best_trials:\n val_accuracy_history = trial.metrics.get_history(name='val_accuracy')\n plt.plot(val_accuracy_history, label=f'Trial {trial.trial_id}')\n\nplt.title('Validation Accuracy of Best Trials')\nplt.xlabel('Epochs')\nplt.ylabel('Validation Accuracy')\nplt.legend()\nplt.show()"
+  }
+}

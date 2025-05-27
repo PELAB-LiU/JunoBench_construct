@@ -1,0 +1,68 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport string\nfrom plotly import graph_objs as go\nimport plotly.express as px\nimport plotly.figure_factory as ff\nfrom wordcloud import STOPWORDS\nfrom collections import defaultdict\nimport random\nimport re\nimport string"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/train.csv')\ntest_df = pd.read_csv('data/test.csv')\ndf.sample(5)"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "class_names =['Not a disaster', 'Disaster']"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 7,
+      "code": "df['word_count'] = df['text'].apply(lambda x: len(str(x).split()))\n\ndf['unique_word_count'] = df['text'].apply(lambda x: len(set(str(x).split())))\n\ndf['stop_word_count'] = df['text'].apply(lambda x: len([w for w in str(x).lower().split() if w in STOPWORDS]))\n\ndf['url_count'] = df['text'].apply(lambda x: len([w for w in str(x).lower().split() if 'http' in w or 'https' in w]))\n\ndf['mean_word_length'] = df['text'].apply(lambda x: np.mean([len(w) for w in str(x).split()]))\n\ndf['char_count'] = df['text'].apply(lambda x: len(str(x)))\n\ndf['punctuation_count'] = df['text'].apply(lambda x: len([c for c in str(x) if c in string.punctuation]))\n\ndf['hashtag_count'] = df['text'].apply(lambda x: len([c for c in str(x) if c == '#']))\n\ndf['mention_count'] = df['text'].apply(lambda x: len([c for c in str(x) if c == '@']))"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 8,
+      "code": "df['word_count'].loc[df['word_count']>60] = 60\ndf['char_count'].loc[df['char_count']>350] = 350\ndf['punctuation_count'].loc[df['punctuation_count']>10] = 10\n\nf, axes = plt.subplots(3, 1, figsize=(20,30))\nsns.boxplot(x='target', y='word_count', data=df, ax=axes[0])\naxes[0].set_xlabel('Target', fontsize=12)\naxes[0].set_title(\"Number of words in each class\", fontsize=15)\n\nsns.boxplot(x='target', y='char_count', data=df, ax=axes[1])\naxes[1].set_xlabel('Target', fontsize=12)\naxes[1].set_title(\"Number of characters in each class\", fontsize=15)\n\nsns.boxplot(x='target', y='punctuation_count', data=df, ax=axes[2])\naxes[2].set_xlabel('Target', fontsize=12)\n\naxes[2].set_title(\"Number of punctuations in each class\", fontsize=15)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 9,
+      "code": "df['hashtag_count'].loc[df['hashtag_count']>60] = 60\ndf['mention_count'].loc[df['mention_count']>60] = 60\n\nf, axes = plt.subplots(3, 1, figsize=(20,30))\n\nsns.boxplot(x='target', y='hashtag_count', data=df, ax=axes[0])\naxes[0].set_xlabel('Target', fontsize=12)\naxes[0].set_title(\"Number of Hashtags in each class\", fontsize=15)\n\nsns.boxplot(x='target', y='mention_count', data=df, ax=axes[1])\naxes[1].set_xlabel('Target', fontsize=12)\naxes[1].set_title(\"Number of Mentions in each class\", fontsize=15)\n\nsns.boxplot(x='target', y='url_count', data=df, ax=axes[2])\naxes[2].set_xlabel('Target', fontsize=12)\naxes[2].set_title(\"Number of URLs in each class\", fontsize=15)\nplt.show()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 10,
+      "code": "exclude = string.punctuation\ndef remove_url(text):\n pattern = re.compile(r'https?://\\S+|www\\.\\S+')\n return pattern.sub(r'', text)\n\ndef remove_punc(text):\n return text.translate(str.maketrans('', '', exclude))"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 11,
+      "code": "text1 = 'Check out my notebook https://www.kaggle.com/campusx/notebook8223fc1abb'\ntext2 = '!hello *world@ 1'\ndf['text'] = df['text'].apply(remove_url)\n\ntest_df['text'] = test_df['text'].apply(remove_url)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 12,
+      "code": "from transformers import BertModel, BertTokenizer\nimport torch\nfrom torch import nn\nfrom torch.utils.data import DataLoader\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import confusion_matrix, classification_report"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 13,
+      "code": "tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 14,
+      "code": "example_text = 'I will watch #Memento tonight!'\nbert_input = tokenizer(example_text, padding='max_length', max_length = 15,\n truncation = True, return_tensors = 'pt')"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 19,
+      "code": "input_ids = torch.tensor(bert_input.input_ids)\nattention_mask = torch.tensor(bert_input.attention_mask)\nbert_model = BertModel.from_pretrained('bert-base-uncased')\nlast_hidden_state, pooled_output = bert_model(input_ids=input_ids, attention_mask=attention_mask, return_dict =False)\n\nprint(last_hidden_state.shape)\nprint(bert_model.config.hidden_size)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 20,
+    "code": "import tensorflow as tf\ntf.keras.utils.plot_model(bert_model)"
+  }
+}

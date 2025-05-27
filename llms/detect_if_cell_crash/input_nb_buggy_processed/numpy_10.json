@@ -1,0 +1,68 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 3,
+      "code": "%matplotlib inline\n%config InlinBackend.figure_format = 'retina'\nimport numpy as np\nimport torch\nfrom torch import nn\nfrom torch import optim\nimport torch.nn.functional as F\nimport ast\nimport torchvision.transforms as transforms\nfrom torchvision import datasets, models, transforms\nimport torchvision.models as models\nfrom torch.autograd import Variable\nfrom collections import OrderedDict\nfrom PIL import Image\nimport json\nimport time\nimport warnings\nwarnings.filterwarnings('ignore')"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 5,
+      "code": "data_dir = 'data_small/flower_data'\ntrain_dir = data_dir + '/train'\nvalid_dir = data_dir + '/valid'\ntest_dir = data_dir + '/test'"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 6,
+      "code": "train_transforms = transforms.Compose([\n transforms.RandomResizedCrop(224),\n transforms.RandomHorizontalFlip(),\n transforms.ToTensor(),\n transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])\n])\n\nval_test_transforms = transforms.Compose([\n transforms.Resize(256),\n transforms.CenterCrop(224),\n transforms.ToTensor(),\n transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])\n])\n\ntrain_ds = datasets.ImageFolder(train_dir, train_transforms)\nvalid_ds = datasets.ImageFolder(valid_dir, val_test_transforms)\ntest_ds = datasets.ImageFolder(test_dir, val_test_transforms)\n\ntrain_loader = torch.utils.data.DataLoader(train_ds, batch_size=64, shuffle=True)\nvalid_loader = torch.utils.data.DataLoader(valid_ds, batch_size=64)\ntest_loader = torch.utils.data.DataLoader(test_ds, batch_size=64)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 7,
+      "code": "with open('data_small/cat_to_name.json', 'r') as f:\n cat_to_name = json.load(f)"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "model = models.vgg16(pretrained=True)\nfor param in model.parameters():\n param.requires_grad = False\n\nmodel.classifier = nn.Sequential(\n nn.Linear(25088, 1024),\n nn.ReLU(),\n nn.Dropout(0.2),\n nn.Linear(1024, 512),\n nn.ReLU(),\n nn.Dropout(0.2),\n nn.Linear(512, 102),\n nn.LogSoftmax(dim=1)\n)\n\ncriterion = nn.NLLLoss()\noptimizer = optim.Adam(model.classifier.parameters(), lr=0.001)\n\nepochs = 2\nprint_every = 100\nsteps = 0\n\nfor e in range(epochs):\n running_loss = 0\n for inputs, labels in train_loader:\n steps += 1\n\n outputs = model(inputs)\n loss = criterion(outputs, labels)\n\n optimizer.zero_grad()\n loss.backward()\n optimizer.step()\n\n running_loss += loss.item()\n\n if steps % print_every == 0:\n model.eval()\n\n val_loss = 0\n accuracy = 0\n\n for inputs, labels in valid_loader:\n\n outputs = model(inputs)\n loss = criterion(outputs, labels)\n\n val_loss += loss.item()\n\n ps = torch.exp(outputs)\n top_p, top_class = ps.topk(1, dim=1)\n equals = top_class == labels.view(*top_class.shape)\n accuracy += torch.mean(equals.type(torch.FloatTensor))\n\n print(f\"Epoch {e+1}/{epochs}.. \"\n f\"Step {steps}/{len(train_loader)}.. \"\n f\"Loss: {running_loss/print_every:.3f}.. \"\n f\"Validation Loss: {val_loss/len(valid_loader):.3f}..\"\n f\"Accuracy: {accuracy/len(valid_loader):.3f}\")\n running_loss = 0\n model.train()"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 9,
+      "code": "model.eval()\n\ntest_loss = 0\naccuracy = 0\n\nwith torch.no_grad():\n for inputs, labels in test_loader:\n\n logps = model(inputs)\n batch_loss = criterion(logps, labels)\n\n test_loss += batch_loss.item()\n\n ps = torch.exp(logps)\n top_p, top_class = ps.topk(1, dim=1)\n equals = top_class == labels.view(*top_class.shape)\n accuracy += torch.mean(equals.type(torch.FloatTensor))\n\ntest_loss = test_loss / len(test_loader)\naccuracy = accuracy / len(test_loader)\n\nprint(f\"Test Loss: {test_loss:.3f}.. \")\nprint(f\"Test Accuracy: {accuracy:.3f}\")"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 10,
+      "code": "model.class_to_idx = train_ds.class_to_idx\n\ncheckpoint = {'input_size': 25088,\n 'output_size': 102,\n 'arch': 'vgg16',\n 'learning_rate': 0.001,\n 'batch_size': 64,\n 'epochs': epochs,\n 'optimizer': optimizer.state_dict(),\n 'classifier': model.classifier,\n 'state_dict': model.state_dict(),\n 'class_to_idx': model.class_to_idx}\n\ntorch.save(checkpoint, 'checkpoint.pth')"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 11,
+      "code": "def load_checkpoint(filepath):\n checkpoint = torch.load(filepath)\n model = models.vgg16(pretrained=True)\n for param in model.parameters():\n param.requires_grad = False\n\n model.class_to_idx = checkpoint['class_to_idx']\n\n model.classifier = checkpoint['classifier']\n model.load_state_dict(checkpoint['state_dict'])\n\n return model\n\nmodel = load_checkpoint('checkpoint.pth')"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 12,
+      "code": "def process_image(image_path):\n \"\"\"Scales, crops, and normalizes a PIL image for a PyTorch model\"\"\"\n\n img = Image.open(image_path)\n\n transformations = transforms.Compose([\n transforms.Resize(256),\n transforms.CenterCrop(224),\n transforms.ToTensor(),\n transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])\n ])\n\n img_tensor = transformations(img)\n\n return img_tensor"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 13,
+      "code": "def imshow(image, ax=None, title=None):\n \"\"\"Imshow for Tensor.\"\"\"\n if ax is None:\n fig, ax = plt.subplots()\n\n image = image.numpy().transpose((1, 2, 0))\n\n mean = np.array([0.485, 0.456, 0.406])\n std = np.array([0.229, 0.224, 0.225])\n image = std * image + mean\n\n image = np.clip(image, 0, 1)\n\n ax.imshow(image)\n\n return ax"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 14,
+      "code": "def predict(image_path, model, topk=5):\n \"\"\"Make a prediction for an image using a trained model\n\n Params\n --------\n image_path (str): path to the image\n model (PyTorch model): trained model for inference\n topk (int): number of top predictions to return\n\n Returns\n --------\n probs (list): top prediction probabilities\n classes (list): top predicted classes\n \"\"\"\n\n device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n model.to(device)\n\n img_tensor = process_image(image_path)\n img_tensor = img_tensor.unsqueeze_(0).to(device)\n\n with torch.no_grad():\n output = model.forward(img_tensor)\n ps = torch.exp(output).topk(topk)\n\n probs = ps[0].tolist()[0]\n classes = ps[1].cpu().tolist()[0]\n\n return probs, classes"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 17,
+      "code": "import matplotlib.pyplot as plt\n\ndef sanity_check(img_path, model):\n\n probs, classes = predict(img_path, model)\n\n class_to_name = {val:key for key, val in model.class_to_idx.items()}\n flower_names = [class_to_name[x] for x in classes]\n\n actual_flower = img_path.split('/')[-2]\n predicted = flower_names[0]\n correct = 'yes' if predicted == actual_flower else 'no'\n\n fig, (ax1, ax2) = plt.subplots(figsize=(6,10), ncols=1, nrows=2)\n\n ax1.imshow(Image.open(img_path))\n ax1.axis('off')\n\n ax2.barh(flower_names, probs)\n ax2.set_yticks(np.arange(len(probs)))\n ax2.set_yticklabels(flower_names)\n ax2.invert_yaxis()\n\n fig.suptitle(\"Actual Class: {} \\n Predicted Class: {} \\n Correctly Classified: {}\".format(\n actual_flower, predicted, correct), fontsize=14)\n\n plt.tight_layout()\n plt.show()\n print(flower_names)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 18,
+    "code": "def display_image(image_path):\n img = process_image(image_path)\n imshow(img)\n\nmodel = load_checkpoint('checkpoint.pth')\n\ntest_image_path = np.random.choice(test_ds.imgs)[0]\ndisplay_image(test_image_path)\n\nprobs, classes = predict(test_image_path, model)\n\nclass_names = [cat_to_name[cls] for cls in classes]\n\nprint(\"Probabilities:\", probs)\nprint(\"Classes:\", class_names)\n\nfor i in range(5):\n test_image_path = np.random.choice(test_ds.imgs)[0]\n display_image(test_image_path)\n\n probs, classes = predict(test_image_path, model)\n\n class_names = [cat_to_name[cls] for cls in classes]\n\n print(\"Probabilities:\", probs)\n print(\"Classes:\", class_names)"
+  }
+}

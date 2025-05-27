@@ -1,0 +1,38 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 1,
+      "code": "import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 2,
+      "code": "houseprice=pd.read_csv('data/data.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 4,
+      "code": "pd.set_option('display.float_format', lambda x: '%.3f' % x)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 9,
+      "code": "X=houseprice.drop(['price','date','city','street','statezip','condition'],axis=1)\nY=houseprice['price']"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 14,
+      "code": "from sklearn.model_selection import train_test_split\nX_train,X_test,Y_train,Y_test=train_test_split(X.values,Y.values,test_size=0.2)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 19,
+      "code": "print(type(X_train),type(Y_train),type(X_test),type(Y_test))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 20,
+    "code": "train_houseprice=pd.DataFrame(X_train, columns = X.columns).join(pd.DataFrame(Y_train, columns = [\"price\"]))"
+  }
+}

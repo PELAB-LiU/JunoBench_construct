@@ -1,0 +1,138 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import numpy as np\nimport pandas as pd\n\nimport os\nfor dirname, _, filenames in os.walk('data'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "df = pd.read_csv('data/train.csv', index_col = 0)\ndf.head()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "df.isna().sum()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "df = df.drop('New_Price', axis = 1)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "df = df.dropna()\ndf.head()"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "df['Engine'] = df['Engine'].apply(lambda x : x.replace(' CC', ''))\ndf['Engine'] = df['Engine'].astype(float)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "def process_mileage(mileage):\n if mileage.endswith('kmpl'):\n mileage = mileage.replace(' kmpl', '')\n return float(mileage)\n elif mileage.endswith('km/kg'):\n mileage = mileage.replace(' km/kg', '')\n return float(mileage) * 1.4\n else:\n return None\ndf['Mileage'] = df['Mileage'].apply(process_mileage)\ndf.head()"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 8,
+      "code": "df.Owner_Type.value_counts()"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 9,
+      "code": "df['No_of_owners'] = df.Owner_Type.map({\n 'First' : 1,\n 'Second' : 2\n})\ndf['No_of_owners'] = df['No_of_owners'].fillna(3)\ndf.head()"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 10,
+      "code": "df.drop('Owner_Type', axis = 1, inplace = True)\ndf.head()"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 11,
+      "code": "df['Power'] = df['Power'].apply(lambda x : x.replace(' bhp', ''))\ndf['Power'] = df['Power'].astype(float)"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 12,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 13,
+      "code": "df.Transmission.value_counts()"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 14,
+      "code": "df = pd.get_dummies(df, columns = ['Transmission', 'Fuel_Type'])\ndf.head()"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 15,
+      "code": "df['Age'] = df['Year'].apply(lambda year : 2023 - year)\ndf.drop('Year', axis = 1, inplace = True)\ndf.head()"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 16,
+      "code": "df.Name.value_counts()"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 17,
+      "code": "Names = df['Name']\ndf.drop('Name', inplace = True, axis = 1)"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 18,
+      "code": "df.head()"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 19,
+      "code": "df.Location.value_counts()"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 20,
+      "code": "df = pd.get_dummies(df, columns = ['Location'])\ndf.head()"
+    },
+    {
+      "execution_count": 22,
+      "code_cell_id": 21,
+      "code": "from sklearn.tree import DecisionTreeRegressor\nmodel = DecisionTreeRegressor()"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 22,
+      "code": "df.shape"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 23,
+      "code": "X = df.drop('Price', axis = 1)\ny = df['Price']"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 24,
+      "code": "from sklearn.model_selection import train_test_split\nX_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.8)"
+    },
+    {
+      "execution_count": 26,
+      "code_cell_id": 25,
+      "code": "model.fit(X_train, y_train)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 26,
+    "code": "y_pred = model.predict(X_test)\nprint(y_pred)"
+  }
+}

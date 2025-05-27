@@ -1,0 +1,128 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 2,
+      "code": "import pandas as pd\nimport numpy as np\nfrom matplotlib import pyplot as plt\n%matplotlib inline\nimport matplotlib as mat\nmat.rcParams[\"figure.figsize\"]=(15,8)\nimport seaborn as sns\nimport warnings\nwarnings.filterwarnings(\"ignore\")\n\nimport datetime as dt\nfrom time import time"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 4,
+      "code": "df = pd.read_csv(\"data/Turbine_Data.csv\",parse_dates=[\"Unnamed: 0\"],\n index_col=\"Unnamed: 0\")\ndf.tail()"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 5,
+      "code": "df.index=pd.to_datetime(df.index)\ndf.head(2)"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 9,
+      "code": "df.drop_duplicates(inplace=True)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 17,
+      "code": "df.drop('WTG', axis=1, inplace=True)\ndf.drop('ControlBoxTemperature', axis=1, inplace=True)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 23,
+      "code": "no_fil=df.copy()"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 24,
+      "code": "df=df[df.index>=\"2019-01-01\"]"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 25,
+      "code": "df = df[df['ActivePower']>=0]"
+    },
+    {
+      "execution_count": 9,
+      "code_cell_id": 36,
+      "code": "filter=df[['WindDirection', 'NacellePosition', 'HubTemperature',\n 'BearingShaftTemperature', 'GearboxBearingTemperature',\n 'GearboxOilTemperature', 'GeneratorWinding1Temperature',\n 'GeneratorWinding2Temperature', 'GeneratorRPM', 'RotorRPM', 'WindSpeed',\n 'ReactivePower', 'ActivePower']]"
+    },
+    {
+      "execution_count": 10,
+      "code_cell_id": 38,
+      "code": "from sklearn.experimental import enable_iterative_imputer\nfrom sklearn.impute import IterativeImputer\nfrom sklearn import linear_model\n\ndf_mice = filter.copy()\n\nmice_imputer = IterativeImputer(estimator=linear_model.BayesianRidge(), n_nearest_features=None, imputation_order='ascending')\n\ndf_mice_imputed = pd.DataFrame(mice_imputer.fit_transform(df_mice), columns=df_mice.columns,index=df_mice.index)"
+    },
+    {
+      "execution_count": 11,
+      "code_cell_id": 40,
+      "code": "from statsmodels.stats.outliers_influence import variance_inflation_factor\nfrom statsmodels.tools.tools import add_constant\n\ndef compute_vif(considered_features):\n\n X = df_mice_imputed[considered_features]\n\n X['intercept'] = 1\n\n vif = pd.DataFrame()\n vif[\"Variable\"] = X.columns\n vif[\"VIF\"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]\n vif = vif[vif['Variable']!='intercept']\n return vif"
+    },
+    {
+      "execution_count": 12,
+      "code_cell_id": 42,
+      "code": "pca_df=df_mice_imputed[[ 'HubTemperature',\n 'BearingShaftTemperature', 'GearboxBearingTemperature',\n 'GearboxOilTemperature', 'RotorRPM', 'WindSpeed',\n 'ReactivePower',\"ActivePower\"]]"
+    },
+    {
+      "execution_count": 13,
+      "code_cell_id": 48,
+      "code": "pca_df[\"ReactivePower\"].mask( pca_df[\"ReactivePower\"]<0, np.nan , inplace=True )\npca_df['GearboxOilTemperature'].mask( pca_df['GearboxOilTemperature']<40, np.nan , inplace=True )"
+    },
+    {
+      "execution_count": 14,
+      "code_cell_id": 51,
+      "code": "out=pca_df.copy()"
+    },
+    {
+      "execution_count": 15,
+      "code_cell_id": 52,
+      "code": "out=out.mask(out.sub(out.mean()).div(out.std()).abs().gt(2))"
+    },
+    {
+      "execution_count": 16,
+      "code_cell_id": 54,
+      "code": "Final=pd.DataFrame(mice_imputer.fit_transform(out), columns=out.columns,index=out.index)"
+    },
+    {
+      "execution_count": 17,
+      "code_cell_id": 64,
+      "code": "daily=no_fil.resample(\"D\").mean()"
+    },
+    {
+      "execution_count": 18,
+      "code_cell_id": 66,
+      "code": "daily['ActivePower']=daily['ActivePower'].interpolate()\ndaily['ActivePower'].isnull().sum()"
+    },
+    {
+      "execution_count": 19,
+      "code_cell_id": 67,
+      "code": "daily['ActivePower']=daily['ActivePower'].fillna(method=\"bfill\")\ndaily['ActivePower'].isnull().sum()"
+    },
+    {
+      "execution_count": 20,
+      "code_cell_id": 71,
+      "code": "train = daily[:-30].copy()\ntest = daily[-30:].copy()"
+    },
+    {
+      "execution_count": 21,
+      "code_cell_id": 72,
+      "code": "from math import sqrt\ndef check_stationarity(y, lags_plots=48, figsize=(22,8)):\n \"Use Series as parameter\"\n\n y = pd.Series(y)\n fig = plt.figure()\n\n ax1 = plt.subplot2grid((3, 3), (0, 0), colspan=2)\n ax2 = plt.subplot2grid((3, 3), (1, 0))\n ax3 = plt.subplot2grid((3, 3), (1, 1))\n ax4 = plt.subplot2grid((3, 3), (2, 0), colspan=2)\n\n y.plot(ax=ax1, figsize=figsize)\n ax1.set_title('Wind Power Variation')\n plot_acf(y, lags=lags_plots, zero=False, ax=ax2);\n plot_pacf(y, lags=lags_plots, zero=False, ax=ax3);\n sns.distplot(y, bins=int(sqrt(len(y))), ax=ax4)\n ax4.set_title('Distribution Chart')\n\n plt.tight_layout()\n\n print('Results of Dickey-Fuller Test:')\n adfinput = adfuller(y)\n adftest = pd.Series(adfinput[0:4], index=['Test Statistic','p-value','Lags Used','Number of Observations Used'])\n adftest = round(adftest,4)\n\n for key, value in adfinput[4].items():\n adftest[\"Critical Value (%s)\"%key] = value.round(4)\n\n print(adftest)\n\n if adftest[0].round(2) < adftest[5].round(2):\n print('\\nThe Test Statistics is lower than the Critical Value of 5%.\\nThe serie seems to be stationary')\n else:\n print(\"\\nThe Test Statistics is higher than the Critical Value of 5%.\\nThe serie isn't stationary\")"
+    },
+    {
+      "execution_count": 23,
+      "code_cell_id": 118,
+      "code": "Uni=Final.ActivePower"
+    },
+    {
+      "execution_count": 24,
+      "code_cell_id": 121,
+      "code": "train, test = Uni[0:44582], Uni[44582:]\ntrain.shape,test.shape"
+    },
+    {
+      "execution_count": 25,
+      "code_cell_id": 122,
+      "code": "from sklearn.preprocessing import MinMaxScaler\n\nscaler = MinMaxScaler(feature_range=(0,1))\n\ntrain = scaler.fit_transform(train.values.reshape(-1,1))\ntest = scaler.transform(test.values.reshape(-1,1))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 73,
+    "code": "from statsmodels.graphics.tsaplots import plot_acf, plot_pacf\nfrom statsmodels.tsa.stattools import adfuller\n\ncheck_stationarity(train['ActivePower'])"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import os\nfor dirname, _, filenames in os.walk('data'):\n for filename in filenames:\n print(os.path.join(dirname, filename))"
+    }
+  ],
+  "target": {
+    "code_cell_id": 5,
+    "code": "sns.set_context('talk', font_scale=.9)\n\nsns.countplot(data=dataset, x='Sex', hue='Risk')\nplt.show()\n\nsns.catplot(data=dataset, x='Sex', y='Age', kind='box')\nplt.show()\n\nsns.violinplot(data=dataset, x='Sex', y='Age', hue='Risk', split=True)\nplt.show()\n\nsns.displot(data=dataset, row='Sex', y='Purpose', col='Risk')\nplt.show()"
+  }
+}

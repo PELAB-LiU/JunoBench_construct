@@ -1,0 +1,23 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nfrom matplotlib import pyplot as plt"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 26,
+      "code": "df = pd.read_csv(\"data/heart.csv\")"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 27,
+      "code": "df.head()"
+    }
+  ],
+  "target": {
+    "code_cell_id": 28,
+    "code": "from sklearn.tree import DecisionTreeClassifier\nmodel = DecisionTreeClassifier()\nmodel .fit(X,y)\ny_hat = model.predict(X)\nprint ( accuracy_score(y_hat,y))"
+  }
+}

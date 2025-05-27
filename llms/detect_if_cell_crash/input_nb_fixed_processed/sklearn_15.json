@@ -1,0 +1,48 @@
+{
+  "executed": [
+    {
+      "execution_count": 1,
+      "code_cell_id": 0,
+      "code": "import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn import metrics\nfrom sklearn.preprocessing import StandardScaler"
+    },
+    {
+      "execution_count": 2,
+      "code_cell_id": 1,
+      "code": "data = pd.read_csv('data/data.csv')"
+    },
+    {
+      "execution_count": 3,
+      "code_cell_id": 2,
+      "code": "data.head()\ndata.info()"
+    },
+    {
+      "execution_count": 4,
+      "code_cell_id": 3,
+      "code": "data = data.drop(['Date', 'Location', 'Evaporation', 'Sunshine', 'Cloud9am', 'Cloud3pm'], axis=1)"
+    },
+    {
+      "execution_count": 5,
+      "code_cell_id": 4,
+      "code": "for column in data.columns:\n if np.issubdtype(data[column].dtype, np.number):\n data[column].fillna(data[column].median(), inplace=True)\n else:\n data[column].fillna(data[column].mode()[0], inplace=True)"
+    },
+    {
+      "execution_count": 6,
+      "code_cell_id": 5,
+      "code": "categorical_columns = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday']\ndata = pd.get_dummies(data, columns=categorical_columns, drop_first=True)"
+    },
+    {
+      "execution_count": 7,
+      "code_cell_id": 6,
+      "code": "X = data.drop('RainTomorrow', axis=1)\ny = data['RainTomorrow']\n\nfrom sklearn.preprocessing import LabelEncoder\nlabel_encoder = LabelEncoder()\ny = label_encoder.fit_transform(y)"
+    },
+    {
+      "execution_count": 8,
+      "code_cell_id": 7,
+      "code": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)"
+    }
+  ],
+  "target": {
+    "code_cell_id": 8,
+    "code": "logreg = LogisticRegression(max_iter=1000)\n\nscaler = StandardScaler()\nX_train = scaler.fit_transform(X_train)\nX_test = scaler.transform(X_test)\n\nlogreg.fit(X_train, y_train)"
+  }
+}
