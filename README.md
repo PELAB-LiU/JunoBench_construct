@@ -100,6 +100,6 @@ Here we explore the usage of JunoBench for evaluating LLMs in crash detection fo
 
 ### References
 
-[1] Wang, Yiran, Willem Meijer, José Antonio Hernández López, Ulf Nilsson, and Dániel Varró. "Why do Machine Learning Notebooks Crash? An Empirical Study on Public Python Jupyter Notebooks." arXiv preprint arXiv:2411.16795 (2024).
+[1] Wang, Yiran, Willem Meijer, José Antonio Hernández López, Ulf Nilsson, and Dániel Varró, "Why do Machine Learning Notebooks Crash? An Empirical Study on Public Python Jupyter Notebooks," in IEEE Transactions on Software Engineering, doi: 10.1109/TSE.2025.3574500.
 
 [2] Quaranta, Luigi, Calefato, Fabio, & Lanubile, Filippo. (2021). collab-uniba/KGTorrent: First release (v. 1.0.0) of KGTorrent (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.4472990
