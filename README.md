@@ -1,10 +1,10 @@
 # JunoBench Source Code Repository
 
-This repository is the source code repository for our paper "*JunoBench: A Benchmark Dataset of Crashes in Python Machine Learning Jupyter Notebooks*" which constructs a benchmark dataset of crashes in Python ML notebooks, with a balanced coverage of a broad range of popular ML libraries, and coverage of notebook-specific out-of-order execution issues.
+This is the source code repository for our paper "*JunoBench: A Benchmark Dataset of Crashes in Python Machine Learning Jupyter Notebooks*" which constructs a benchmark dataset of crashes in Python ML notebooks, with a balanced coverage of popular ML libraries. It also covers notebook-specific out-of-order execution issues.
 
-The constructed benchmark - JunoBench can be found here: 
+The constructed benchmark - JunoBench can be found on [Hugging Face](https://huggingface.co/datasets/PELAB-LiU/JunoBench).
 
-The link to the paper: 
+The link to the paper: [todo]
 
 ## Data collection
 
