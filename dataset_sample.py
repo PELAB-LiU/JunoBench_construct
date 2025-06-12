@@ -4,6 +4,10 @@ import shutil
 import zipfile
 import tarfile
 from collections import defaultdict
+import os
+from pathlib import Path
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 def sample_images_per_class(input_dir, output_dir, num_images=10):
     """
@@ -105,12 +109,93 @@ def sample_unzip_across_folders(archive_path, output_dir, proportion=0.1, seed=4
 
     print(f"Sampled extraction completed in '{output_dir}'.")
 
+def downsample_VOCdevkit_VOC2012(SUBSAMPLE_RATIO=0.1, SEED=42):
+    SRC_DIR = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_14\data\VOCdevkit\VOC2012"
+    DST_DIR = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_14\data_small\VOCdevkit\VOC2012"
 
-# Example usage
+    random.seed(SEED)
+    os.makedirs(DST_DIR, exist_ok=True)
+
+    # Directories to mirror
+    subdirs = ["Annotations", "JPEGImages", "ImageSets"]
+
+    # Get all image IDs (no extensions)
+    image_ids = [f.stem for f in Path(SRC_DIR, "JPEGImages").glob("*.jpg")]
+    sample_size = int(len(image_ids) * SUBSAMPLE_RATIO)
+    sampled_ids = set(random.sample(image_ids, sample_size))
+
+    print(f"Selected {sample_size} out of {len(image_ids)} images (~10%)")
+
+    # === Copy Annotations and JPEGImages ===
+    for folder in ["Annotations", "JPEGImages"]:
+        os.makedirs(Path(DST_DIR, folder), exist_ok=True)
+        for img_id in sampled_ids:
+            ext = ".xml" if folder == "Annotations" else ".jpg"
+            src = Path(SRC_DIR, folder, img_id + ext)
+            dst = Path(DST_DIR, folder, img_id + ext)
+            if src.exists():
+                shutil.copy2(src, dst)
+
+    # === Filter ImageSets ===
+    imagesets_src = Path(SRC_DIR, "ImageSets")
+    imagesets_dst = Path(DST_DIR, "ImageSets")
+
+    for subset in imagesets_src.rglob("*.txt"):
+        relative_path = subset.relative_to(imagesets_src)
+        dst_file = imagesets_dst / relative_path
+        dst_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(subset, "r") as f_in, open(dst_file, "w") as f_out:
+            for line in f_in:
+                parts = line.strip().split()
+                img_id = parts[0]
+                if img_id in sampled_ids:
+                    f_out.write(line)
+
+    print("✅ Finished creating 10% subset.")
+
+def downsample_torch1_data(SUBSAMPLE_RATIO=0.1, SEED=42):
+    csv_path = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data\pairs.csv'
+    image_dir = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data\archive\images_labeled'
+    output_dir = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data_small\archive\images_labeled'
+    output_csv_path = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data_small\pairs.csv'
+
+    df = pd.read_csv(csv_path, sep='\t' if '\t' in open(csv_path).readline() else ',')
+
+    df_downsampled, _ = train_test_split(
+        df,
+        test_size=1-SUBSAMPLE_RATIO,
+        stratify=df['label'],
+        random_state=SEED
+    )
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    copied_files = set()
+    for _, row in df_downsampled.iterrows():
+        for img_file in [row['image1'], row['image2']]:
+            if img_file not in copied_files:
+                src = os.path.join(image_dir, img_file)
+                dst = os.path.join(output_dir, img_file)
+                if os.path.exists(src):
+                    shutil.copy(src, dst)
+                    copied_files.add(img_file)
+                else:
+                    print(f"Warning: {img_file} not found.")
+
+    df_downsampled.to_csv(output_csv_path, index=False)  
+
+    print(f"Downsampled CSV saved to: {output_csv_path}")
+    print(f"Images copied to: {output_dir}")
+
+
 # input_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\sidhantssrivastava_cnn-yoga\data\yoga_poses\train"
 # output_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\sidhantssrivastava_cnn-yoga\data_small\yoga_poses\train"
 # sample_images_per_class(input_folder, output_folder, num_images=10)
 
-input_zip = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\ashioyajotham_pytorch-image-classifier\flower_data1.tar"
-output_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\ashioyajotham_pytorch-image-classifier\data_small\flower_data"
-sample_unzip_across_folders(input_zip, output_folder, proportion=0.1)
+# input_zip = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\ashioyajotham_pytorch-image-classifier\flower_data1.tar"
+# output_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\ashioyajotham_pytorch-image-classifier\data_small\flower_data"
+# sample_unzip_across_folders(input_zip, output_folder, proportion=0.1)
+
+# downsample_VOCdevkit_VOC2012()
+downsample_torch1_data()

@@ -138,6 +138,7 @@ def preprocess_buggy_notebook_auto_executed_code_cells(nb_path: str, out_name: s
 
 # [for detecting if a target cell crash]
 # process fixed notebooks to: a list of successfully executed code cells, used-to-crash code cell (target)
+# special: torch_14 (added a cell in fixed version)
 def preprocess_fixed_notebook_auto_executed_code_cells(nb_buggy_path: str, nb_fix_path: str, out_name: str):
     with open(nb_buggy_path, 'r', encoding='utf-8') as f:
         nb_buggy = read(f, as_version=NO_CONVERT)
