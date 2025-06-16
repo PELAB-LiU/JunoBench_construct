@@ -52,23 +52,23 @@ def find_buggy_cell_index_and_line(nb_cells: List[dict]) -> Tuple[Optional[int],
         code_cell_index += 1
     return None, None
 
-def normalize_whitespace(code):
-    # Remove trailing spaces and tabs on each line
-    lines = [line.rstrip() for line in code.splitlines()]
+# def normalize_whitespace(code):
+#     # Remove trailing spaces and tabs on each line
+#     lines = [line.rstrip() for line in code.splitlines()]
     
-    # Replace multiple blank lines with a single blank line
-    cleaned = []
-    blank = False
-    for line in lines:
-        if line.strip() == "":
-            if not blank:
-                cleaned.append("")
-                blank = True
-        else:
-            cleaned.append(re.sub(r'[ \t]+', ' ', line))  # Reduce inner spaces
-            blank = False
+#     # Replace multiple blank lines with a single blank line
+#     cleaned = []
+#     blank = False
+#     for line in lines:
+#         if line.strip() == "":
+#             if not blank:
+#                 cleaned.append("")
+#                 blank = True
+#         else:
+#             cleaned.append(re.sub(r'[ \t]+', ' ', line))  # Reduce inner spaces
+#             blank = False
 
-    return '\n'.join(cleaned).strip()
+#     return '\n'.join(cleaned).strip()
 
 def remove_comments(source_code):
     tokens = tokenize.generate_tokens(StringIO(source_code).readline)
@@ -97,7 +97,7 @@ def remove_comments(source_code):
     cleaned_code = ''.join(result)
     # Optional: strip trailing spaces from each line
     cleaned_code = '\n'.join(line.rstrip() for line in cleaned_code.splitlines())
-    return normalize_whitespace(cleaned_code)
+    return cleaned_code #normalize_whitespace(cleaned_code)
 
 # [for detecting if a target cell crash]
 # process reproduced crashing notebooks to: a list of successfully executed code cells, crashing code cell (target)
