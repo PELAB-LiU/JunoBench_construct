@@ -116,7 +116,7 @@ def preprocess_buggy_notebook_auto_executed_code_cells(nb_path: str, out_name: s
         if cell.cell_type == 'code':
             exec_count = cell.get('execution_count')
             first_line = cell.source.strip().splitlines()[0] if cell.source.strip() else ""
-            if (("[re-execute]" in first_line) or ("[reexecute]" in first_line)) or (code_cell_count != buggy_index and exec_count is not None):
+            if (("[re-execute]" in first_line) or ("[reexecute]" in first_line)) or (code_cell_count < buggy_index and exec_count is not None):
                 processed_nb["executed"].append({
                     "execution_count": exec_count, 
                     "code_cell_id": code_cell_count, 
@@ -147,12 +147,12 @@ def preprocess_fixed_notebook_auto_executed_code_cells(nb_buggy_path: str, nb_fi
 
     processed_nb = {"executed": [], "target": None}
     code_cell_count = 0  # Track code cells for logical indexing
-    executed_cell_ids_buggy = [d["code_cell_id"] for d in nb_buggy["executed"]]
     target_cell_id_buggy = nb_buggy["target"]["code_cell_id"]
     for cell in nb_fix.cells:
         if cell.cell_type == 'code':
             exec_count = cell.get('execution_count')
-            if (code_cell_count in executed_cell_ids_buggy) and (code_cell_count != target_cell_id_buggy):
+            first_line = cell.source.strip().splitlines()[0] if cell.source.strip() else ""
+            if (("[re-execute]" in first_line) or ("[reexecute]" in first_line)) or (code_cell_count < target_cell_id_buggy and exec_count is not None):
                 processed_nb["executed"].append({
                     "execution_count": exec_count, 
                     "code_cell_id": code_cell_count, 
