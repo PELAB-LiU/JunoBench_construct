@@ -117,7 +117,7 @@ def preprocess_buggy_notebook_auto_executed_code_cells(nb_path: str, out_name: s
         if cell.cell_type == 'code':
             exec_count = cell.get('execution_count')
             first_line = cell.source.strip().splitlines()[0] if cell.source.strip() else ""
-            if (("[re-execute]" in first_line) or ("[reexecute]" in first_line)) or ((code_cell_count != buggy_index) and (exec_count is not None) and (exec_count < buggy_exec_count)):
+            if ("[reexecute]" in first_line) or ((code_cell_count != buggy_index) and (exec_count is not None) and (exec_count < buggy_exec_count)):
                 processed_nb["executed"].append({
                     "execution_count": exec_count, 
                     "code_cell_id": code_cell_count, 
@@ -154,7 +154,7 @@ def preprocess_fixed_notebook_auto_executed_code_cells(nb_buggy_path: str, nb_fi
         if cell.cell_type == 'code':
             exec_count = cell.get('execution_count')
             first_line = cell.source.strip().splitlines()[0] if cell.source.strip() else ""
-            if (("[re-execute]" in first_line) or ("[reexecute]" in first_line)) or ((code_cell_count != target_cell_id_buggy) and (exec_count is not None) and (exec_count < target_exec_count_fixed)):
+            if ("[reexecute]" in first_line) or ((code_cell_count != target_cell_id_buggy) and (exec_count is not None) and (exec_count < target_exec_count_fixed)):
                 processed_nb["executed"].append({
                     "execution_count": exec_count, 
                     "code_cell_id": code_cell_count, 
