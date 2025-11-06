@@ -82,18 +82,18 @@ Here we explore the usage of JunoBench for evaluating LLMs in crash detection fo
 
 | LLMs (version)<br>/Crash | mistral-small3.1:latest<br>(Buggy) | mistral-small3.1:latest<br>(Fixed) | llama3:70b<br>(Buggy) | llama3:70b<br>(Fixed) |
 |----------|----------|----------|----------|----------|
-| NBspecific | 15 / 20 | 7 / 20 | 16 / 18 | 4 / 18 |
-| pandas | 7 / 15 | 10 / 15 | 11 / 15 | 7 / 15 |
-| numpy | 8 / 13 | 7 / 13 | 5 / 12 | 10 / 12 |
-| sklearn | 9 / 15 | 13 / 15 | 6 / 14 | 12 / 14 |
-| tensorflow/keras | 11 / 15 | 11 / 15 | 8 / 15 | 7 / 15 |
-| torch | 10 / 14  | 6 / 14  | 6 / 12 | 9 / 12 |
-| matplotlib | 3 / 6 | 4 / 6 | 2 / 5 | 2 / 5 |
-| seaborn | 1 / 6 | 5 / 6 | 3 / 5 | 4 / 5 |
-| statsmodels | 0 / 2 | 2 / 2 | 0 / 2 | 1 / 2 |
-| lightgbm | 0 / 1 | 1 / 1 | 0 / 1 | 1 / 1 |
-| torchvision | 1 / 1 | 0 / 1 | 1 / 1 | 0 / 1 |
-| **Total** | **65 / 108** | **66 / 108** | **58 / 100** | **57 / 100** |
+| NBspecific | 15 / 20 | 7 / 20  | 16 / 18 | 4 / 18  |
+| pandas     | 6 / 15  | 10 / 15 | 11 / 15 | 7 / 15  |
+| numpy      | 8 / 13  | 7 / 13  | 5 / 12  | 10 / 12 |
+| sklearn    | 7 / 15  | 13 / 15 | 6 / 14  | 12 / 14 |
+| tensorflow/keras | 12 / 15 | 11 / 15 | 8 / 15 | 7 / 15 |
+| torch      | 10 / 14 | 5 / 14  | 6 / 12 | 9 / 12 |
+| matplotlib | 3 / 6   | 4 / 6   | 2 / 5  | 2 / 5  |
+| seaborn    | 1 / 6   | 5 / 6   | 3 / 5  | 4 / 5  |
+| statsmodels| 0 / 2   | 2 / 2   | 0 / 2  | 1 / 2  |
+| lightgbm   | 0 / 1   | 1 / 1   | 0 / 1  | 1 / 1  |
+| torchvision| 1 / 1   | 0 / 1   | 1 / 1  | 0 / 1  |
+| **Total** | **63 / 108** | **65 / 108** | **58 / 100** | **57 / 100** |
 
 
 ### References

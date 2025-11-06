@@ -169,4 +169,4 @@ cython_debug/
 # Custom folders.
 data/
 logs
-test.ipynb
+*test.*
