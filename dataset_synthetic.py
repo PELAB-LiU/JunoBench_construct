@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import random
 import string
+import utils.config as config
 
 # Function to generate fake value based on original column properties
 def generate_fake_value(dtype, col_series):
@@ -49,5 +50,5 @@ def generate_fake_dataset(path_ori):
     print(f"Synthetic dataset generated and saved as '{path_new}'.")
 
 
-path_ori = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\reproduced\mathyseizaecrepin_paris-house-price-regression-analysis\data\ParisHousing.csv'
+path_ori = config.path_projects.joinpath("Dataset-Nb/reproduced/mathyseizaecrepin_paris-house-price-regression-analysis/data/ParisHousing.csv")
 generate_fake_dataset(path_ori)

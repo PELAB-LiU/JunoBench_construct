@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import utils.config as config
 
 def sample_images_per_class(input_dir, output_dir, num_images=10):
     """
@@ -110,8 +111,8 @@ def sample_unzip_across_folders(archive_path, output_dir, proportion=0.1, seed=4
     print(f"Sampled extraction completed in '{output_dir}'.")
 
 def downsample_VOCdevkit_VOC2012(SUBSAMPLE_RATIO=0.1, SEED=42):
-    SRC_DIR = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_14\data\VOCdevkit\VOC2012"
-    DST_DIR = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_14\data_small\VOCdevkit\VOC2012"
+    SRC_DIR = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/data/torch_14/data/VOCdevkit/VOC2012")
+    DST_DIR = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/data/torch_14/data_small/VOCdevkit/VOC2012")
 
     random.seed(SEED)
     os.makedirs(DST_DIR, exist_ok=True)
@@ -155,10 +156,10 @@ def downsample_VOCdevkit_VOC2012(SUBSAMPLE_RATIO=0.1, SEED=42):
     print("✅ Finished creating 10% subset.")
 
 def downsample_torch1_data(SUBSAMPLE_RATIO=0.1, SEED=42):
-    csv_path = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data\pairs.csv'
-    image_dir = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data\archive\images_labeled'
-    output_dir = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data_small\archive\images_labeled'
-    output_csv_path = r'C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\data\torch_1\data_small\pairs.csv'
+    csv_path = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/data/torch_1/data/pairs.csv")
+    image_dir = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/data/torch_1/data/archive/images_labeled")
+    output_dir = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/data/torch_1/data_small/archive/images_labeled")
+    output_csv_path = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/data/torch_1/data_small/pairs.csv")
 
     df = pd.read_csv(csv_path, sep='\t' if '\t' in open(csv_path).readline() else ',')
 
@@ -189,12 +190,12 @@ def downsample_torch1_data(SUBSAMPLE_RATIO=0.1, SEED=42):
     print(f"Images copied to: {output_dir}")
 
 
-# input_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\sidhantssrivastava_cnn-yoga\data\yoga_poses\train"
-# output_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\sidhantssrivastava_cnn-yoga\data_small\yoga_poses\train"
+# input_folder = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/0_new_new_samples/sidhantssrivastava_cnn-yoga/data/yoga_poses/train")
+# output_folder = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/0_new_new_samples/sidhantssrivastava_cnn-yoga/data_small/yoga_poses/train")
 # sample_images_per_class(input_folder, output_folder, num_images=10)
 
-# input_zip = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\ashioyajotham_pytorch-image-classifier\flower_data1.tar"
-# output_folder = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\0_new_new_samples\ashioyajotham_pytorch-image-classifier\data_small\flower_data"
+# input_zip = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/0_new_new_samples/ashioyajotham_pytorch-image-classifier/flower_data1.tar")
+# output_folder = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/0_new_new_samples/ashioyajotham_pytorch-image-classifier/data_small/flower_data")
 # sample_unzip_across_folders(input_zip, output_folder, proportion=0.1)
 
 # downsample_VOCdevkit_VOC2012()

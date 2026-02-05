@@ -1,6 +1,7 @@
 from pathlib import Path
+import utils.config as config
 
-path_default = Path(r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench")
+path_default = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench")
 path_nbs = path_default.joinpath("benchmark")
 path_nbs_desc = path_default.joinpath("benchmark_desc.xlsx")
 

@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
+import utils.config as config
 
-BASE_PATH = r"C:\Users\yirwa29\Downloads\Dataset-Nb\Docker_kaggle_env\JunoBench\benchmark"
+BASE_PATH = config.path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/JunoBench/benchmark")
 
 def check_folders_exceed_limit(dir_path):
     MAX_FILES_PER_DIR = 10_000      # Hugging Face Git directory limit

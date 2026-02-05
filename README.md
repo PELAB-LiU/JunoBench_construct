@@ -42,8 +42,8 @@ Our data source is our previous empirical study [1] with its [published data](ht
 
 * For the crashes we included in the benchmark from the resampled notebooks (37/500), we manually labeled them following the dimensions established in our empirical study [1].
 
-* Overall, 111 notebooks with crashes are included in the benchmark. The statistics can be found in:
-    + [statistics_benchmark_all.ipynb](./statistics_benchmark_all.ipynb)
+* Overall, 111 notebooks with crashes are included in the benchmark. The description of the benchmark dataset can be found in [benchmark_desc.xlsx](https://huggingface.co/datasets/PELAB-LiU/JunoBench/blob/main/benchmark_desc.xlsx).
+The statistics can be found in: [statistics_benchmark_all.ipynb](./statistics_benchmark_all.ipynb).
 
 ## Potential research opportunities - LLM as a crash detector
 
