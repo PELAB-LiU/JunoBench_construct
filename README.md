@@ -6,18 +6,22 @@ The constructed benchmark - JunoBench can be found on [Hugging Face](https://hug
 
 ## Data collection
 
-Our data source is our previous empirical study [1] with its [published data](https://doi.org/10.5281/zenodo.14070488). 
+Our **data source** is the published data, [data_jupyter_nbs_empirical](https://doi.org/10.5281/zenodo.14070487), from the previous empirical study [1]. 
 
-* We used the 356 labeled Kaggle crashing notebooks and resampled additional unlabeled Kaggle crashes.
+* We first use the labeled dataset (*data_jupyter_nbs_empirical/Manual_labeling*) from the empirical study. Inside the excel file (*cluster_sampled_labeled_final.xlsx*), we **filtered** the labeled crashes:
+    + using only Kaggle notebooks (nb_source == *1*);
+    + keeping only ML bugs (label_if_ML_bug == *ML/data science library related (ML imports, error raised by library)*) and notebook-specific issues (label_root_cause == *nb specific ...*);
+    + excluding root cause being as environment-related (i.e., *module not installed, change of environment, file/path not found or exist, library versions incompatible, settings(permission, environment), external control (window closed), insufficient resources, and error inside library*)
+* Then we **resampled** additional unlabeled Kaggle crashes based on the file containing all kaggle crashes in the released dataset (*data_jupyter_nbs_empirical/Clustering/clusters_Kaggle_final.xlsx*).
     + [resample_error_nbs.py](./resample_error_nbs.py)
 * For the unlabeled crashes, we implemented a lightweight tool to automatically estimate the ML libraries that are in use when the crashes occur.
     + [auto_library_cause.py](./auto_library_cause.py)
-* The tool is tested against the labeled crashes and achieved an accurarcy of 80%.
+* The ML library cause estimation tool is tested against the labeled crashes and achieved an accurarcy of 80%.
     + [test_auto_library_cause.ipynb](./test_auto_library_cause.ipynb)
 
 ## Benchmark construction
 
-* We first retrieved information about the input datasets associated with the notebooks in our dataset, using the [KGTorrent](https://github.com/collab-uniba/KGTorrent) [2] with the [Meta Kaggle dataset](https://www.kaggle.com/datasets/kaggle/meta-kaggle). The information includes dataset titles, licenses, and downloading links. 
+* We first retrieved information about the **input datasets** associated with the notebooks in our dataset, using the [KGTorrent](https://github.com/collab-uniba/KGTorrent) [2] with the [Meta Kaggle dataset](https://www.kaggle.com/datasets/kaggle/meta-kaggle). The information includes dataset titles, licenses, and downloading links. 
 
 * We use the links to download the input datasets required to reproduce each crashing notebook. For large dataset, we downsampled them if possible:
     + [dataset_sample.py](./dataset_sample.py)
@@ -27,7 +31,7 @@ Our data source is our previous empirical study [1] with its [published data](ht
 
 * For each notebook, we retain the original notebook and create a **reproduced version** where we manually reproduce the crash, and a **fixed version** where we manually allocate and repair the root cause while preserving the original intent of the developer.
 
-* We manually validated the labels of the labaled dataset during the reproducing and fixing process, and found 7 out of 74 cases with incorrect root cause labels:
+* We **manually validated** the labels of the labaled dataset during the reproducing and fixing process, and found 7 out of 74 cases with incorrect root cause labels:
 
     | fname | eid | ename | evalue | library_cause | root_cause |
     |----|----|----|----|----|----|
@@ -40,10 +44,16 @@ Our data source is our previous empirical study [1] with its [published data](ht
     | 4ac82e_fer-2013-facial-expression-recognition-detection..pynb  |  b6935f7d-9c9b-3c57-8888-0d8ead2ec1a9  |  error  |  OpenCV(4.8.1) /io/opencv/modules/imgproc/src/color.cpp:182: error: (-215:Assertion failed) !_src.empty() in function 'cvtColor'  |  cv2  |  **unknown -> environment issue (external control)**  |
 
 
-* For the crashes we included in the benchmark from the resampled notebooks (37/500), we manually labeled them following the dimensions established in our empirical study [1].
+* For the crashes we included in the benchmark from the resampled notebooks (37/500), we **manually labeled** them following the dimensions established in our empirical study [1].
 
-* Overall, 111 notebooks with crashes are included in the benchmark. The description of the benchmark dataset can be found in [benchmark_desc.xlsx](https://huggingface.co/datasets/PELAB-LiU/JunoBench/blob/main/benchmark_desc.xlsx).
-The statistics can be found in: [statistics_benchmark_all.ipynb](./statistics_benchmark_all.ipynb).
+* Overall, 111 notebooks with crashes are included in [JunoBench](https://huggingface.co/datasets/PELAB-LiU/JunoBench). The description of the benchmark dataset can be found in [benchmark_desc.xlsx](data/benchmark_desc.xlsx).
+The statistics about JunoBench can be found in: [statistics_benchmark_all.ipynb](./statistics_benchmark_all.ipynb).
+
+## Docker environment build
+
+We built a unified docker image for reproducing all the notebooks in JunoBench, which includes a Kaggle notebook platform and libraries required by the notebooks in JunoBench. 
+
+The image was first built from the official Kaggle CPU Docker image (*sha256:0b88fd200569a8649c3297b22a1795f9efd71701cb3dd4af7222864e727a8c0d*) with our [forked official Kaggle repository](https://github.com/yarinamomo/docker-kaggle-python). Then we installed Python libraries required by all the notebooks included in JunoBench. The list of libraries can be found in [requirement.txt](data/requirements.txt). Then a final docker image is compiled and released on [DockerHub](https://hub.docker.com/repository/docker/yarinamomo/kaggle_python_env/tags/latest/sha256-73380761b1f37a83aef2c247a9d725c796c6196abf14bccc92b92b25c7eb81b9) with digest (sha256:73380761b1f37a83aef2c247a9d725c796c6196abf14bccc92b92b25c7eb81b9).
 
 ## Potential research opportunities - LLM as a crash detector
 

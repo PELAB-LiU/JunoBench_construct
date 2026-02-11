@@ -31,7 +31,7 @@ def sample(libraries, sample_size, save_path):
     # filter based on already sampled files
     # tmp_k = tmp_k[~tmp_k["fname"].isin(get_already_sampled_file_names())]
     # filter based on interested libraries
-    imports_pd = pd.read_excel(config.path_projects.joinpath('Kaggle/ml_library/nb_imports_all_final.xlsx'))
+    imports_pd = pd.read_excel(config.path_projects.joinpath('data_jupyter_nbs_empirical/Kaggle/ml_library/nb_imports_all_final.xlsx'))
     imports_pd['imports'] = imports_pd['imports'].apply(eval)
     filtered_file_names = imports_pd[imports_pd['imports'].apply(lambda x: any(item in x for item in libraries))]['fname']
     tmp_k = tmp_k[tmp_k['fname'].isin(filtered_file_names)]

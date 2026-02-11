@@ -2,13 +2,16 @@ from pathlib import Path
 
 path_projects = Path(r"C:\Users\yirwa29\Downloads")
 
-# path_kaggle_benchmark_sheet_ori = "data/cluster_sampled_labeled_processed.xlsx"
-path_kaggle_benchmark_sheet = path_projects.joinpath("data_jupyter_nbs_empirical/Manual_labeling/cluster_sampled_labeled_final.xlsx")
+# input file from the prior empirical study: data_jupyter_nbs_empirical/Manual_labeling
+path_kaggle_benchmark_sheet = path_projects.joinpath("data/cluster_sampled_labeled_final.xlsx")
+# intermediate/temporary files generated during the process of benchmarking, turned into the final benchmark description file: path_kaggle_benchmark_desc
 path_kaggle_benchmark_sheet_new = "data/new_samples.xlsx"
 path_kaggle_benchmark_sheet_all = "data/benchmark_processed.xlsx"
 path_kaggle_benchmark_desc_pre = "data/benchmark_desc_pre.xlsx"
+# final benchmark description file
 path_kaggle_benchmark_desc = "data/benchmark_desc.xlsx"
 
+# path_kaggle_benchmark_sheet_ori = "data/cluster_sampled_labeled_processed.xlsx"
 # path_notebooks_sample = path_projects.joinpath("Dataset-Nb/sampled_notebooks")
 # path_notebooks_reproduce_folder = path_projects.joinpath("Dataset-Nb/Docker_kaggle_env/benchmark")    
 # path_notebooks_kerror = path_projects.joinpath("Dataset-Nb/nbdata_k_error/k_error_nbs")
