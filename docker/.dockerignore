@@ -1,0 +1,21 @@
+# Version control
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files  
+.DS_Store
+Thumbs.db
+
+# Large data files
+*.csv
+*.h5
+*.pkl
+
+# Virtual environments
+venv/
+.env

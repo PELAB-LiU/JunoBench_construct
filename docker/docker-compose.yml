@@ -1,0 +1,25 @@
+services:
+  junobench:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: junobench:latest
+    container_name: junobench-container
+    ports:
+      - "8888:8888"
+    volumes:
+      - ..:/app
+      - junobench_data:/app/data
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=your_secure_token_here
+    networks:
+      - junobench-network
+    restart: unless-stopped
+
+volumes:
+  junobench_data:
+
+networks:
+  junobench-network:
+    driver: bridge
