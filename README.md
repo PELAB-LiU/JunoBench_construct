@@ -49,13 +49,21 @@ Our **data source** is the published data, [data_jupyter_nbs_empirical](https://
 * Overall, 111 notebooks with crashes are included in [JunoBench](https://huggingface.co/datasets/PELAB-LiU/JunoBench). The description of the benchmark dataset can be found in [benchmark_desc.xlsx](data/benchmark_desc.xlsx).
 The statistics about JunoBench can be found in: [statistics_benchmark_all.ipynb](./statistics_benchmark_all.ipynb).
 
-## Docker environment build
+## Docker environment
 
-We built a unified docker image for reproducing all the notebooks in JunoBench, which includes a Kaggle notebook platform and libraries required by the notebooks in JunoBench. 
+### Provided docker environment
+We built a unified Docker image to reproduce all notebooks in JunoBench. This image includes the Kaggle notebook platform environment as well as all libraries required by all the notebooks in JunoBench.
 
-The image was first built from the official Kaggle CPU Docker image (*sha256:0b88fd200569a8649c3297b22a1795f9efd71701cb3dd4af7222864e727a8c0d*) with our [forked official Kaggle repository](https://github.com/yarinamomo/docker-kaggle-python). Then we installed Python libraries required by all the notebooks included in JunoBench. The list of libraries can be found under "*benchmark dataset related*" section under [requirement.txt](data/requirements.txt). Then a final docker image is compiled and released on [DockerHub](https://hub.docker.com/repository/docker/yarinamomo/kaggle_python_env).
+The image is based on the official Kaggle CPU Docker image (*sha256:0b88fd200569a8649c3297b22a1795f9efd71701cb3dd4af7222864e727a8c0d*) and is built using our [fork of the official Kaggle repository](https://github.com/yarinamomo/docker-kaggle-python).
 
-One can also build a simplified docker image on their own with instructions in [Docker_ReadMe](docker/README.md). Specific setups and related Dockerfile can be found [here](docker/).
+On top of this base image, we installed all Python libraries required by the notebooks in JunoBench. The complete list of dependencies can be found in the “benchmark dataset related” section of [requirement.txt](data/requirements.txt).
+
+The final Docker image is compiled and publicly available on [DockerHub](https://hub.docker.com/repository/docker/yarinamomo/kaggle_python_env) with digest (*sha256:73380761b1f37a83aef2c247a9d725c796c6196abf14bccc92b92b25c7eb81b9*).
+
+### Built own docker environment (simplified)
+We also provide instructions for users who prefer to build a simplified Docker image themselves. This image includes essential Jupyter-related libraries along with the dependencies required by the ML notebooks in JunoBench, but excludes the Kaggle web-based platform. It is suitable for specialized hardware environments or for users who want a smaller, more lightweight image.
+
+The corresponding setup details and Dockerfiles are available in the [docker](docker/) directory. For step-by-step instructions, please refer to [Docker_ReadMe](docker/README.md).
 
 ## Potential research opportunities - LLM as a crash detector
 
