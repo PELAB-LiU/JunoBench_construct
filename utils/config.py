@@ -1,6 +1,7 @@
 from pathlib import Path
 
-path_projects = Path(r"C:\Users\yirwa29\Downloads")
+path_root = Path(r"C:\Users\yirwa29\Downloads")
+path_projects = path_root.joinpath("JunoBench_construct")
 
 # input file from the prior empirical study: data_jupyter_nbs_empirical/Manual_labeling
 path_kaggle_benchmark_sheet = path_projects.joinpath("data/cluster_sampled_labeled_final.xlsx")
