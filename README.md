@@ -65,57 +65,6 @@ We also provide instructions for users who prefer to build a simplified Docker i
 
 The corresponding setup details and Dockerfiles are available in the [docker](docker/) directory. For step-by-step instructions, please refer to [Docker_ReadMe](docker/README.md).
 
-## Potential research opportunities - LLM as a crash detector
-
-Here we explore the usage of JunoBench for evaluating LLMs in crash detection for ML notebooks. The related code, results, and intermediate data can be found in 📁 [`llms`](./llms/)
-
-### Experimental setup
-
-* Goal: Given all the successfully executed code cells of a notebook, predict whether a target cell will crash if next to execute.
-
-* Evaluated LLMs: 
-    + llama3.3:70b, 
-    + mistral-small3.1:latest (24B)
-
-* Prediction:
-    + 5 runs/notebook
-    + independently run on both **buggy** version (ground truth: **TRUE**) and **fixed** version (ground truth: **FALSE**) of each case
-    + Skip when exceeding max tokens of the LLMs
-        + llama3.3:70b: Skipped 11 cases for each versions
-        + mistral-small3.1:latest (24B): Skipped 3 cases for each versions
-
-* Input user message:
-    + All successfully executed code cells, in execution order. 
-    + Target cell (the crashing cell in the reproduced buggy version, cell with the same cell id in the fixed version)
-    + Removed cell output/error information/comments in the code
-
-* Expected output:
-    + TRUE: crash
-    + FALSE: not crash
-    
-* Evaluation Metrics:
-    + Accurarcy with majority votes strategy
-
-
-### Results
-
-
-| LLMs (version)<br>/Crash | mistral-small3.1:latest<br>(Buggy) | mistral-small3.1:latest<br>(Fixed) | llama3:70b<br>(Buggy) | llama3:70b<br>(Fixed) |
-|----------|----------|----------|----------|----------|
-| NBspecific | 15 / 20 | 7 / 20  | 16 / 18 | 4 / 18  |
-| pandas     | 6 / 15  | 10 / 15 | 11 / 15 | 7 / 15  |
-| numpy      | 8 / 13  | 7 / 13  | 5 / 12  | 10 / 12 |
-| sklearn    | 7 / 15  | 13 / 15 | 6 / 14  | 12 / 14 |
-| tensorflow/keras | 12 / 15 | 11 / 15 | 8 / 15 | 7 / 15 |
-| torch      | 10 / 14 | 5 / 14  | 6 / 12 | 9 / 12 |
-| matplotlib | 3 / 6   | 4 / 6   | 2 / 5  | 2 / 5  |
-| seaborn    | 1 / 6   | 5 / 6   | 3 / 5  | 4 / 5  |
-| statsmodels| 0 / 2   | 2 / 2   | 0 / 2  | 1 / 2  |
-| lightgbm   | 0 / 1   | 1 / 1   | 0 / 1  | 1 / 1  |
-| torchvision| 1 / 1   | 0 / 1   | 1 / 1  | 0 / 1  |
-| **Total** | **63 / 108** | **65 / 108** | **58 / 100** | **57 / 100** |
-
-
 ### References
 
 [1] Wang, Yiran, Willem Meijer, José Antonio Hernández López, Ulf Nilsson, and Dániel Varró, "Why do Machine Learning Notebooks Crash? An Empirical Study on Public Python Jupyter Notebooks," in IEEE Transactions on Software Engineering, doi: 10.1109/TSE.2025.3574500.
